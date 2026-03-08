@@ -8,42 +8,67 @@ The system allows users to **upload short videos, interact with content, follow 
 
 # Repository Structure
 
-````
+```
 WEB-Project
-│
-├── backend
-│   ├── controllers
-│   ├── routes
-│   ├── services
-│   ├── models
-│   ├── middleware
-│   ├── config
-│   ├── utils
-│   ├── tests
-│   ├── uploads
-│   ├── app.js
-│   ├── server.js
-│   └── package.json
-│
-├── frontend
-│   ├── app
-│   ├── components
-│   ├── hooks
-│   ├── services
-│   └── package.json
-│
-├── docs
-│   ├── diagrams
-│   └── API documentation
-│
-├── scripts
-│   └── automation scripts
-│
-├── docker-compose.yml
-├── .gitignore
-└── README.md
+├─ backend
+│  ├─ app.js
+│  ├─ config
+│  │  └─ db.js
+│  ├─ controllers
+│  │  ├─ authController.js
+│  │  ├─ healthController.js
+│  │  └─ userController.js
+│  ├─ middleware
+│  │  ├─ authMiddleware.js
+│  │  ├─ errorMiddleware.js
+│  │  ├─ ownershipMiddleware.js
+│  │  └─ validateMiddleware.js
+│  ├─ models
+│  │  ├─ followModel.js
+│  │  ├─ reviewModel.js
+│  │  ├─ userModel.js
+│  │  └─ videoModel.js
+│  ├─ package-lock.json
+│  ├─ package.json
+│  ├─ scripts
+│  │  └─ testModels.js
+│  ├─ server.js
+│  ├─ services
+│  │  ├─ authService.js
+│  │  ├─ healthService.js
+│  │  └─ userService.js
+│  ├─ tests
+│  ├─ uploads
+│  └─ utils
+│     ├─ appError.js
+│     ├─ catchAsync.js
+│     └─ validators.js
+├─ docker-compose.yml
+├─ docs
+├─ frontend
+│  ├─ app
+│  │  ├─ favicon.ico
+│  │  ├─ globals.css
+│  │  └─ page.js
+│  ├─ components
+│  ├─ eslint.config.mjs
+│  ├─ hooks
+│  ├─ jsconfig.json
+│  ├─ next.config.mjs
+│  ├─ package-lock.json
+│  ├─ package.json
+│  ├─ postcss.config.mjs
+│  ├─ public
+│  │  ├─ file.svg
+│  │  ├─ globe.svg
+│  │  ├─ next.svg
+│  │  ├─ vercel.svg
+│  │  └─ window.svg
+│  ├─ README.md
+│  └─ services
+└─ README.md
 
-````
+```
 
 ---
 
@@ -386,3 +411,4 @@ This project is for **educational purposes**.
 
 ```
 ```
+
