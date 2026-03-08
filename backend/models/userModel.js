@@ -7,6 +7,8 @@ const userSchema = new mongoose.Schema(
       required: [true, "Username is required"],
       unique: true,
       trim: true,
+      minlength: [3, "Username must be at least 3 characters"],
+      maxlength: [30, "Username must not exceed 30 characters"],
     },
     email: {
       type: String,
@@ -14,11 +16,12 @@ const userSchema = new mongoose.Schema(
       unique: true,
       lowercase: true,
       trim: true,
+      match: [/^\S+@\S+\.\S+$/, "Please provide a valid email"],
     },
     password: {
       type: String,
       required: [true, "Password is required"],
-      minlength: 6,
+      minlength: [6, "Password must be at least 6 characters"],
       select: false,
     },
     role: {
@@ -29,14 +32,29 @@ const userSchema = new mongoose.Schema(
     bio: {
       type: String,
       default: "",
+      maxlength: [300, "Bio must not exceed 300 characters"],
     },
     avatarKey: {
       type: String,
       default: "",
+      trim: true,
+    },
+    active: {
+      type: Boolean,
+      default: true,
+    },
+    accountStatus: {
+      type: String,
+      enum: ["active", "suspended", "banned"],
+      default: "active",
     },
   },
   { timestamps: true }
 );
+
+// Explicit indexes
+userSchema.index({ email: 1 }, { unique: true });
+userSchema.index({ username: 1 }, { unique: true });
 
 const User = mongoose.model("User", userSchema);
 
