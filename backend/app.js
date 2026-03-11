@@ -7,6 +7,8 @@ import healthRoutes from "./routes/healthRoutes.js";
 import { globalErrorHandler, notFoundHandler } from "./middleware/errorMiddleware.js";
 import authRoutes from "./routes/authRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
+import videoRoutes from "./routes/videoRoutes.js";
+
 
 const app = express();
 
@@ -35,6 +37,7 @@ app.use(mongoSanitize());
 app.use("/", healthRoutes);
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/users", userRoutes);
+app.use("/api/v1/videos", videoRoutes);
 
 // 404 + Global error handler
 app.use(notFoundHandler);
