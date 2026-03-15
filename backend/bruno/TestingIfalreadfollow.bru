@@ -1,0 +1,20 @@
+meta {
+  name: TestingIfalreadfollow
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/api/v1/users/{{userBId}}/follow
+  body: none
+  auth: inherit
+}
+
+headers {
+  Authorization: Bearer {{tokenA}}
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

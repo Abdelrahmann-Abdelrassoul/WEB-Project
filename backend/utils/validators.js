@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { describe } from "zod/v4/core";
 
 const registerSchema = z.object({
   username: z.string().min(3, "Username must be at least 3 characters"),
@@ -16,6 +15,18 @@ const updateMeSchema = z.object({
   username: z.string().min(3).optional(),
   bio: z.string().max(300).optional(),
   avatarKey: z.string().optional(),
+});
+
+const notificationChannelSchema = z.object({
+  followers: z.boolean(),
+  comments: z.boolean(),
+  likes: z.boolean(),
+  tips: z.boolean(),
+});
+
+const updateNotificationPreferencesSchema = z.object({
+  inApp: notificationChannelSchema,
+  email: notificationChannelSchema,
 });
 
 const createVideoSchema = z.object({
@@ -37,4 +48,12 @@ const createReviewSchema = z.object({
   comment: z.string().max(500, "Comment must not exceed 500 characters").optional().default(""),
 });
 
-export { registerSchema, loginSchema, updateMeSchema, createVideoSchema, updateVideoSchema, createReviewSchema };
+export {
+  registerSchema,
+  loginSchema,
+  updateMeSchema,
+  updateNotificationPreferencesSchema,
+  createVideoSchema,
+  updateVideoSchema,
+  createReviewSchema,
+};

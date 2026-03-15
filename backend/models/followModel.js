@@ -20,11 +20,10 @@ const followSchema = new mongoose.Schema(
 followSchema.index({ follower: 1, following: 1 }, { unique: true });
 
 // Hook: prevent self-follow
-followSchema.pre("save", function (next) {
+followSchema.pre("save", function () {
   if (this.follower.toString() === this.following.toString()) {
-    return next(new Error("Users cannot follow themselves"));
+    throw new Error("Users cannot follow themselves");
   }
-  next();
 });
 
 const Follow = mongoose.model("Follow", followSchema);

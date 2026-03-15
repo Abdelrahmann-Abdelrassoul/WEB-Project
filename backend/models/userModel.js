@@ -1,5 +1,27 @@
 import mongoose from "mongoose";
 
+const notificationChannelSchema = new mongoose.Schema(
+  {
+    followers: {
+      type: Boolean,
+      default: true,
+    },
+    comments: {
+      type: Boolean,
+      default: true,
+    },
+    likes: {
+      type: Boolean,
+      default: true,
+    },
+    tips: {
+      type: Boolean,
+      default: true,
+    },
+  },
+  { _id: false }
+);
+
 const userSchema = new mongoose.Schema(
   {
     username: {
@@ -48,11 +70,19 @@ const userSchema = new mongoose.Schema(
       enum: ["active", "suspended", "banned"],
       default: "active",
     },
+    notificationPreferences: {
+      inApp: {
+        type: notificationChannelSchema,
+        default: () => ({}),
+      },
+      email: {
+        type: notificationChannelSchema,
+        default: () => ({}),
+      },
+    },
   },
   { timestamps: true }
 );
-
-
 
 const User = mongoose.model("User", userSchema);
 
