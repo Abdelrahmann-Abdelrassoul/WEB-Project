@@ -1,0 +1,20 @@
+meta {
+  name: Moderation
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/api/v1/admin/moderation?ratingThreshold=3.0
+  body: none
+  auth: inherit
+}
+
+params:query {
+  ratingThreshold: 3.0
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

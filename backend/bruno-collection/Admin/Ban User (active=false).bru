@@ -1,0 +1,24 @@
+meta {
+  name: Ban User (active=false)
+  type: http
+  seq: 3
+}
+
+patch {
+  url: {{baseUrl}}/api/v1/admin/users/:id/status
+  body: json
+  auth: inherit
+}
+
+params:path {
+  id: 69b712ffb844d4c248328435
+}
+
+body:json {
+  { "accountStatus": "banned" }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

@@ -1,0 +1,39 @@
+meta {
+  name: Notfication Prefences in main and app
+  type: http
+  seq: 1
+}
+
+patch {
+  url: {{baseUrl}}/api/v1/users/preferences
+  body: json
+  auth: inherit
+}
+
+headers {
+  Authorization: Bearer {{tokenB}}
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "inApp": {
+      "followers": true,
+      "comments": false,
+      "likes": false,
+      "tips": true
+    },
+    "email": {
+      "followers": false,
+      "comments": true,
+      "likes": false,
+      "tips": false
+    }
+  }
+  
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

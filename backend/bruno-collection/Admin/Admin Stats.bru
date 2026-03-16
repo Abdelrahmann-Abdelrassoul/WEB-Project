@@ -1,15 +1,16 @@
 meta {
-  name: Sign up
+  name: Admin Stats
   type: http
   seq: 1
 }
 
 get {
-  url: 
+  url: {{baseUrl}}/api/v1/admin/stats
   body: none
   auth: inherit
 }
 
 settings {
   encodeUrl: true
+  timeout: 0
 }

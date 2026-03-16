@@ -1,0 +1,20 @@
+meta {
+  name: user can not follow himself
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/v1/users/{{userAId}}/follow
+  body: none
+  auth: inherit
+}
+
+headers {
+  Authorization: Bearer {{tokenA}}
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

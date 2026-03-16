@@ -7,6 +7,7 @@ import healthRoutes from "./routes/healthRoutes.js";
 import { globalErrorHandler, notFoundHandler } from "./middleware/errorMiddleware.js";
 import authRoutes from "./routes/authRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
+import adminRoutes from "./routes/adminRoutes.js";
 import videoRoutes from "./routes/videoRoutes.js";
 
 
@@ -37,6 +38,7 @@ app.use(mongoSanitize());
 app.use("/", healthRoutes);
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/users", userRoutes);
+app.use("/api/v1/admin", adminRoutes);
 app.use("/api/v1/videos", videoRoutes);
 
 // 404 + Global error handler
