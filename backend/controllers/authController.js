@@ -37,4 +37,17 @@ const login = catchAsync(async (req, res) => {
   });
 });
 
-export { register, login };
+const logout = catchAsync(async (req, res) => {
+  res.cookie("token", "", {
+    httpOnly: true,
+    expires: new Date(0), // Expire immediately
+    sameSite: "lax",
+  });
+  
+  res.status(200).json({
+    status: "success",
+    message: "Logged out successfully",
+  });
+});
+
+export { register, login, logout };

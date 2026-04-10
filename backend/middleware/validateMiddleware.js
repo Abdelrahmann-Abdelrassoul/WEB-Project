@@ -4,7 +4,7 @@ const validate = (schema) => (req, res, next) => {
   if (!result.success) {
     return res.status(400).json({
       status: "fail",
-      message: "Validation failed",
+      message: "Email or password is invalid.",
       errors: result.error.issues.map((issue) => ({
         field: issue.path.join("."),
         message: issue.message,

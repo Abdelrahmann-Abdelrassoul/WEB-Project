@@ -31,7 +31,12 @@ app.use(
     },
   })
 );
-app.use(cors());
+app.use(cors({
+  origin: "http://localhost:3000", // Your Next.js frontend URL
+  credentials: true, // Allow cookies to be sent/received
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+}));
 app.use(express.json({ limit: "10kb" }));
 app.use(cookieParser());
 
