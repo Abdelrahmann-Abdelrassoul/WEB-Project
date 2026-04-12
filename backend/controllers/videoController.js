@@ -7,6 +7,9 @@ import {
 } from "../services/videoServices.js";
 import catchAsync from "../utils/catchAsync.js";
 import AppError from "../utils/appError.js";
+import { GetObjectCommand } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import s3, { BUCKET_NAME } from "../config/minio.js";
 
 const listVideos = catchAsync(async (req, res) => {
   const limit = Math.min(parseInt(req.query.limit, 10) || 20, 50);
@@ -25,22 +28,20 @@ const listVideos = catchAsync(async (req, res) => {
 });
 
 const createVideo = catchAsync(async (req, res) => {
-  const { title, description, videoURL, duration } = req.body;
+  const { title, description } = req.body;
   const ownerId = req.user.id;
 
   const video = await createVideoService({
     title,
     description,
-    videoURL,
-    duration,
+    videoURL: req.objectKey,
+    duration: req.videoDuration,
     ownerId,
   });
 
   res.status(201).json({
     status: "success",
-    data: {
-      video,
-    },
+    data: { video }
   });
 });
 
@@ -66,4 +67,23 @@ const deleteVideo = catchAsync(async (req, res) => {
   res.status(204).send();
 });
 
-export { listVideos, createVideo, updateVideo, deleteVideo, loadVideo };
+const streamVideo = catchAsync(async (req, res, next) => {
+  const video = await getVideoByID(req.params.id);
+  if (!video) return next(new AppError("Video not found", 404));
+
+  const command = new GetObjectCommand({
+    Bucket: BUCKET_NAME,
+    Key: video.videoURL,   // videoURL field stores the objectKey
+  });
+
+  const presignedUrl = await getSignedUrl(s3, command, {
+    expiresIn: 60 * 15,   // 15 minutes
+  });
+
+  res.status(200).json({
+    status: "success",
+    data: { url: presignedUrl },
+  });
+});
+
+export { listVideos, createVideo, updateVideo, deleteVideo, loadVideo, streamVideo };

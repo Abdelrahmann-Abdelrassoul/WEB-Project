@@ -1,0 +1,16 @@
+meta {
+  name: Get a video
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/v1/videos/69dbcab3bcdf39c7b35d153f/stream
+  body: json
+  auth: inherit
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

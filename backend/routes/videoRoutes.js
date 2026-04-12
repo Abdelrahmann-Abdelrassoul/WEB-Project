@@ -1,9 +1,10 @@
 import express from "express";
-import { listVideos, createVideo, updateVideo, deleteVideo, loadVideo } from "../controllers/videoController.js";
+import { listVideos, createVideo, updateVideo, deleteVideo, loadVideo, streamVideo } from "../controllers/videoController.js";
 import { createReview } from "../controllers/reviewController.js";
 import { createVideoSchema, updateVideoSchema, createReviewSchema } from "../utils/validators.js";
 import validate from "../middleware/validateMiddleware.js";
 import { protect } from "../middleware/authMiddleware.js";
+import { handleVideoUpload } from "../middleware/uploadMiddleware.js";
 import { checkOwnership } from "../middleware/ownershipMiddleware.js";
 
 const router = express.Router();
@@ -76,7 +77,7 @@ router.get("/", listVideos);
  *       401:
  *         $ref: '#/components/responses/Unauthorized'
  */
-router.post("/", protect, validate(createVideoSchema), createVideo);
+router.post("/", protect, handleVideoUpload, validate(createVideoSchema), createVideo);
 
 /**
  * @swagger
@@ -208,5 +209,11 @@ router.delete(
   checkOwnership((req) => req.video.owner),
   deleteVideo
 );
+
+router.get(
+  "/:id/stream",
+  protect,
+  streamVideo
+)
 
 export default router;
