@@ -1,12 +1,26 @@
 import Video from "../models/videoModel.js";
 
 export const listVideos = async ({ limit = 20, skip = 0 }) => {
-  const videos = await Video.find({ status: "public" })
-    .sort({ createdAt: -1 })
-    .skip(skip)
-    .limit(Math.min(limit, 50))
-    .populate("owner", "username avatarKey");
-  return videos;
+  const safeLimit = Math.min(Math.max(limit, 1), 50);
+  const safeSkip = Math.max(skip, 0);
+  const filter = { status: "public" };
+
+  const [videos, total] = await Promise.all([
+    Video.find(filter)
+      .sort({ createdAt: -1 })
+      .skip(safeSkip)
+      .limit(safeLimit)
+      .populate("owner", "username avatarKey"),
+    Video.countDocuments(filter),
+  ]);
+
+  return {
+    videos,
+    total,
+    limit: safeLimit,
+    skip: safeSkip,
+    hasMore: safeSkip + videos.length < total,
+  };
 };
 
 export const getVideoByID = async (videoID) => {

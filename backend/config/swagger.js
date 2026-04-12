@@ -322,7 +322,7 @@ const options = {
           name: "page",
           in: "query",
           required: false,
-          description: "Page number (default: 1)",
+          description: "Optional page number fallback. Used only when skip is not provided.",
           schema: { type: "integer", minimum: 1, default: 1 },
         },
         limitQuery: {
@@ -331,6 +331,13 @@ const options = {
           required: false,
           description: "Items per page (default: 20, max: 50)",
           schema: { type: "integer", minimum: 1, maximum: 50, default: 20 },
+        },
+        skipQuery: {
+          name: "skip",
+          in: "query",
+          required: false,
+          description: "Number of videos to skip before returning the next chunk (default: 0)",
+          schema: { type: "integer", minimum: 0, default: 0 },
         },
       },
     },

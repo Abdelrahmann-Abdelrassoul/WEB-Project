@@ -16,8 +16,9 @@ const router = express.Router();
  *     summary: List all public videos (paginated)
  *     tags: [Videos]
  *     parameters:
- *       - $ref: '#/components/parameters/pageQuery'
  *       - $ref: '#/components/parameters/limitQuery'
+ *       - $ref: '#/components/parameters/skipQuery'
+ *       - $ref: '#/components/parameters/pageQuery'
  *     responses:
  *       200:
  *         description: A paginated list of videos
@@ -32,6 +33,25 @@ const router = express.Router();
  *                 results:
  *                   type: integer
  *                   example: 20
+ *                 pagination:
+ *                   type: object
+ *                   properties:
+ *                     limit:
+ *                       type: integer
+ *                       example: 20
+ *                     skip:
+ *                       type: integer
+ *                       example: 40
+ *                     total:
+ *                       type: integer
+ *                       example: 128
+ *                     hasMore:
+ *                       type: boolean
+ *                       example: true
+ *                     nextSkip:
+ *                       type: integer
+ *                       nullable: true
+ *                       example: 60
  *                 data:
  *                   type: object
  *                   properties:

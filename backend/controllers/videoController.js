@@ -12,17 +12,28 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import s3, { BUCKET_NAME } from "../config/minio.js";
 
 const listVideos = catchAsync(async (req, res) => {
-  const limit = Math.min(parseInt(req.query.limit, 10) || 20, 50);
-  const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
-  const skip = (page - 1) * limit;
+  const parsedLimit = Number.parseInt(req.query.limit, 10);
+  const parsedSkip = Number.parseInt(req.query.skip, 10);
+  const parsedPage = Number.parseInt(req.query.page, 10);
 
-  const videos = await listVideosService({ limit, skip });
+  const limit = Number.isNaN(parsedLimit) ? 20 : Math.min(Math.max(parsedLimit, 1), 50);
+  const page = Number.isNaN(parsedPage) ? 1 : Math.max(parsedPage, 1);
+  const skip = Number.isNaN(parsedSkip) ? (page - 1) * limit : Math.max(parsedSkip, 0);
+
+  const pagination = await listVideosService({ limit, skip });
 
   res.status(200).json({
     status: "success",
-    results: videos.length,
+    results: pagination.videos.length,
+    pagination: {
+      limit: pagination.limit,
+      skip: pagination.skip,
+      total: pagination.total,
+      hasMore: pagination.hasMore,
+      nextSkip: pagination.hasMore ? pagination.skip + pagination.videos.length : null,
+    },
     data: {
-      videos,
+      videos: pagination.videos,
     },
   });
 });

@@ -1,0 +1,16 @@
+meta {
+  name: List videos (paginated)
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/v1/videos?limit=12&skip=0
+  body: json
+  auth: none
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
