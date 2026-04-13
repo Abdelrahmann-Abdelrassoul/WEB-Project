@@ -3,15 +3,20 @@ import User from "../models/userModel.js";
 import AppError from "../utils/appError.js";
 import catchAsync from "../utils/catchAsync.js";
 
-const protect = catchAsync(async (req, res, next) => {
-  let token;
-
+const getTokenFromRequest = (req) => {
   if (req.headers.authorization?.startsWith("Bearer ")) {
-    token = req.headers.authorization.split(" ")[1];
+    return req.headers.authorization.split(" ")[1];
   }
-  else if (req.cookies?.token) {
-    token = req.cookies.token;
+
+  if (req.cookies?.token) {
+    return req.cookies.token;
   }
+
+  return null;
+};
+
+const protect = catchAsync(async (req, res, next) => {
+  const token = getTokenFromRequest(req);
 
   if (!token) {
     return next(new AppError("You are not logged in. Please provide a token.", 401));
@@ -28,6 +33,27 @@ const protect = catchAsync(async (req, res, next) => {
   next();
 });
 
+const optionalProtect = catchAsync(async (req, res, next) => {
+  const token = getTokenFromRequest(req);
+
+  if (!token) {
+    return next();
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const currentUser = await User.findById(decoded.id);
+
+    if (currentUser) {
+      req.user = currentUser;
+    }
+  } catch {
+    req.user = undefined;
+  }
+
+  next();
+});
+
 const restrictTo = (...roles) => {
   return (req, res, next) => {
     if (!req.user?.role || !roles.includes(req.user.role)) {
@@ -37,4 +63,4 @@ const restrictTo = (...roles) => {
   };
 };
 
-export { protect, restrictTo };
+export { protect, optionalProtect, restrictTo };

@@ -2,12 +2,16 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useAuthContext } from "../../context/AuthContext";
-import { CalendarDays, Clock, Eye, Play, RefreshCw, UserRound } from "lucide-react";
+import { CalendarDays, Clock, Eye, Play, RefreshCw, UserRound, Users } from "lucide-react";
 import { useApp } from "../../context/AppContext";
 import LoadingSpinner from "../../components/ui/LoadingSpinner";
 import { getVideos } from "../../services/videoService";
 
 const PAGE_SIZE = 8;
+const FEED_OPTIONS = [
+  { id: "all", label: "For You" },
+  { id: "following", label: "Following" },
+];
 
 const formatDuration = (totalSeconds = 0) => {
   const safeSeconds = Math.max(Number(totalSeconds) || 0, 0);
@@ -31,6 +35,7 @@ const formatViews = (views = 0) =>
 export default function HomePage() {
   const { user } = useAuthContext();
   const { showError } = useApp();
+  const [activeFeed, setActiveFeed] = useState("all");
   const [videos, setVideos] = useState([]);
   const [initialLoading, setInitialLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -40,14 +45,14 @@ export default function HomePage() {
   const sentinelRef = useRef(null);
   const isFetchingRef = useRef(false);
   const nextSkipRef = useRef(0);
-  const initialLoadStartedRef = useRef(false);
+  const hasMoreRef = useRef(true);
 
   const loadVideos = useCallback(async ({ reset = false } = {}) => {
     if (isFetchingRef.current) {
       return;
     }
 
-    if (!reset && !hasMore) {
+    if (!reset && !hasMoreRef.current) {
       return;
     }
 
@@ -66,6 +71,7 @@ export default function HomePage() {
       const { videos: nextVideos, pagination } = await getVideos({
         limit: PAGE_SIZE,
         skip: reset ? 0 : nextSkipRef.current,
+        feed: activeFeed,
       });
 
       setVideos((currentVideos) => {
@@ -79,6 +85,7 @@ export default function HomePage() {
       });
 
       setHasMore(pagination.hasMore);
+      hasMoreRef.current = pagination.hasMore;
       setTotalVideos(pagination.total);
       nextSkipRef.current =
         pagination.nextSkip ?? pagination.skip + nextVideos.length;
@@ -95,16 +102,17 @@ export default function HomePage() {
 
       isFetchingRef.current = false;
     }
-  }, [hasMore, showError]);
+  }, [activeFeed, showError]);
 
   useEffect(() => {
-    if (initialLoadStartedRef.current) {
-      return;
-    }
-
-    initialLoadStartedRef.current = true;
+    setVideos([]);
+    setTotalVideos(0);
+    setHasMore(true);
+    hasMoreRef.current = true;
+    setFeedError("");
+    nextSkipRef.current = 0;
     loadVideos({ reset: true });
-  }, [loadVideos]);
+  }, [activeFeed, loadVideos]);
 
   useEffect(() => {
     const sentinel = sentinelRef.current;
@@ -139,11 +147,46 @@ export default function HomePage() {
           {user ? `Welcome back, ${user.username}!` : "Explore the latest videos"}
         </h1>
         <p className="text-gray-400 mt-2">
-          Scroll through the feed and more videos will load automatically as you reach the bottom.
+          Switch between your full discovery feed and a following-only feed while infinite scroll keeps loading the next page.
         </p>
         <p className="text-sm text-gray-500 mt-3">
           {initialLoading ? "Loading feed..." : `${videos.length} of ${totalVideos} videos loaded`}
         </p>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-3">
+        {FEED_OPTIONS.map((feedOption) => {
+          const isFollowingFeed = feedOption.id === "following";
+          const isDisabled = isFollowingFeed && !user;
+          const isActive = activeFeed === feedOption.id;
+
+          return (
+            <button
+              key={feedOption.id}
+              type="button"
+              onClick={() => {
+                if (!isDisabled) {
+                  setActiveFeed(feedOption.id);
+                }
+              }}
+              disabled={isDisabled}
+              className={`rounded-full border px-4 py-2 text-sm font-medium transition ${
+                isActive
+                  ? "border-purple-400 bg-purple-500/20 text-white"
+                  : "border-white/10 bg-white/5 text-gray-300 hover:bg-white/10"
+              } ${isDisabled ? "cursor-not-allowed opacity-50" : ""}`}
+            >
+              {feedOption.label}
+            </button>
+          );
+        })}
+
+        {activeFeed === "following" ? (
+          <span className="inline-flex items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-500/10 px-4 py-2 text-sm text-cyan-100">
+            <Users size={16} />
+            Videos from accounts you follow
+          </span>
+        ) : null}
       </div>
 
       {feedError && !videos.length ? (
@@ -170,9 +213,13 @@ export default function HomePage() {
 
       {!initialLoading && !videos.length && !feedError ? (
         <div className="rounded-2xl border border-white/10 bg-white/5 p-10 text-center">
-          <p className="text-lg font-semibold text-white">No public videos yet.</p>
+          <p className="text-lg font-semibold text-white">
+            {activeFeed === "following" ? "No videos from followed creators yet." : "No public videos yet."}
+          </p>
           <p className="mt-2 text-sm text-gray-400">
-            New uploads will appear here automatically once creators publish them.
+            {activeFeed === "following"
+              ? "Follow more creators or wait for someone you follow to publish a video."
+              : "New uploads will appear here automatically once creators publish them."}
           </p>
         </div>
       ) : null}

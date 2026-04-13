@@ -3,7 +3,7 @@ import { listVideos, createVideo, updateVideo, deleteVideo, loadVideo, streamVid
 import { createReview } from "../controllers/reviewController.js";
 import { createVideoSchema, updateVideoSchema, createReviewSchema } from "../utils/validators.js";
 import validate from "../middleware/validateMiddleware.js";
-import { protect } from "../middleware/authMiddleware.js";
+import { optionalProtect, protect } from "../middleware/authMiddleware.js";
 import { handleVideoUpload } from "../middleware/uploadMiddleware.js";
 import { checkOwnership } from "../middleware/ownershipMiddleware.js";
 
@@ -19,6 +19,12 @@ const router = express.Router();
  *       - $ref: '#/components/parameters/limitQuery'
  *       - $ref: '#/components/parameters/skipQuery'
  *       - $ref: '#/components/parameters/pageQuery'
+ *       - in: query
+ *         name: feed
+ *         schema:
+ *           type: string
+ *           enum: [all, following]
+ *         description: Feed mode. Use `following` to return videos only from accounts the authenticated user follows.
  *     responses:
  *       200:
  *         description: A paginated list of videos
@@ -52,6 +58,9 @@ const router = express.Router();
  *                       type: integer
  *                       nullable: true
  *                       example: 60
+ *                     feed:
+ *                       type: string
+ *                       example: all
  *                 data:
  *                   type: object
  *                   properties:
@@ -60,7 +69,7 @@ const router = express.Router();
  *                       items:
  *                         $ref: '#/components/schemas/Video'
  */
-router.get("/", listVideos);
+router.get("/", optionalProtect, listVideos);
 
 /**
  * @swagger

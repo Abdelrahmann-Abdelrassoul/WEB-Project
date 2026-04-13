@@ -15,12 +15,18 @@ const listVideos = catchAsync(async (req, res) => {
   const parsedLimit = Number.parseInt(req.query.limit, 10);
   const parsedSkip = Number.parseInt(req.query.skip, 10);
   const parsedPage = Number.parseInt(req.query.page, 10);
+  const feed = req.query.feed === "following" ? "following" : "all";
 
   const limit = Number.isNaN(parsedLimit) ? 20 : Math.min(Math.max(parsedLimit, 1), 50);
   const page = Number.isNaN(parsedPage) ? 1 : Math.max(parsedPage, 1);
   const skip = Number.isNaN(parsedSkip) ? (page - 1) * limit : Math.max(parsedSkip, 0);
 
-  const pagination = await listVideosService({ limit, skip });
+  const pagination = await listVideosService({
+    limit,
+    skip,
+    feed,
+    currentUserId: req.user?.id ?? null,
+  });
 
   res.status(200).json({
     status: "success",
@@ -31,6 +37,7 @@ const listVideos = catchAsync(async (req, res) => {
       total: pagination.total,
       hasMore: pagination.hasMore,
       nextSkip: pagination.hasMore ? pagination.skip + pagination.videos.length : null,
+      feed: pagination.feed,
     },
     data: {
       videos: pagination.videos,

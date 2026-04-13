@@ -1,0 +1,26 @@
+meta {
+  name: Following feed (Youssef)
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/api/v1/videos?limit=8&skip=0&feed=following
+  body: none
+  auth: inherit
+}
+
+headers {
+  Authorization: Bearer {{tokenA}}
+}
+
+params:query {
+  limit: 8
+  skip: 0
+  feed: following
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

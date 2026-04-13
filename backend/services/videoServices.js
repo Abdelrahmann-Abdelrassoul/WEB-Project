@@ -1,9 +1,33 @@
 import Video from "../models/videoModel.js";
+import Follow from "../models/followModel.js";
+import AppError from "../utils/appError.js";
 
-export const listVideos = async ({ limit = 20, skip = 0 }) => {
+export const listVideos = async ({ limit = 20, skip = 0, feed = "all", currentUserId = null }) => {
   const safeLimit = Math.min(Math.max(limit, 1), 50);
   const safeSkip = Math.max(skip, 0);
+  const normalizedFeed = feed === "following" ? "following" : "all";
   const filter = { status: "public" };
+
+  if (normalizedFeed === "following") {
+    if (!currentUserId) {
+      throw new AppError("You must be logged in to load the following feed", 401);
+    }
+
+    const followedUserIds = await Follow.find({ follower: currentUserId }).distinct("following");
+
+    if (!followedUserIds.length) {
+      return {
+        videos: [],
+        total: 0,
+        limit: safeLimit,
+        skip: safeSkip,
+        hasMore: false,
+        feed: normalizedFeed,
+      };
+    }
+
+    filter.owner = { $in: followedUserIds };
+  }
 
   const [videos, total] = await Promise.all([
     Video.find(filter)
@@ -20,6 +44,7 @@ export const listVideos = async ({ limit = 20, skip = 0 }) => {
     limit: safeLimit,
     skip: safeSkip,
     hasMore: safeSkip + videos.length < total,
+    feed: normalizedFeed,
   };
 };
 
