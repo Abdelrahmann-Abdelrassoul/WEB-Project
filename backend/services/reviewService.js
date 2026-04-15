@@ -27,7 +27,9 @@ export const createReview = async ({ videoId, userId, rating, comment }) => {
     });
   }
 
-  return review;
+  await review.populate("user", "username avatarKey");
+
+  return review.toObject ? review.toObject() : review;
 };
 
 export const listReviewsByVideo = async (videoId) => {

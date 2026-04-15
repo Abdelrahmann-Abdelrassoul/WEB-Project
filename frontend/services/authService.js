@@ -51,6 +51,25 @@ export const getMe = async () => {
   return res.json();
 };
 
+export const updateNotificationPreferences = async (preferences) => {
+  const res = await fetch(buildApiUrl("/users/preferences"), {
+    method: "PATCH",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(preferences),
+  });
+
+  const payload = await readJsonSafely(res);
+
+  if (!res.ok) {
+    throw new Error(payload?.message || "Unable to update notification preferences");
+  }
+
+  return payload?.data?.user ?? null;
+};
+
 export const logout = async () => {
   try {
     const res = await fetch(buildApiUrl("/auth/logout"), {
