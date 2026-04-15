@@ -1,4 +1,4 @@
-const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
+import { buildApiUrl, readJsonSafely } from "./api.js";
 
 export const getVideos = async ({ limit = 8, skip = 0, feed = "all", owner = "" } = {}) => {
   const searchParams = new URLSearchParams({
@@ -11,12 +11,12 @@ export const getVideos = async ({ limit = 8, skip = 0, feed = "all", owner = "" 
     searchParams.set("owner", String(owner));
   }
 
-  const res = await fetch(`${API}/videos?${searchParams.toString()}`, {
+  const res = await fetch(`${buildApiUrl("/videos")}?${searchParams.toString()}`, {
     credentials: "include",
     cache: "no-store",
   });
 
-  const payload = await res.json().catch(() => null);
+  const payload = await readJsonSafely(res);
 
   if (!res.ok) {
     throw new Error(payload?.message || "Unable to load the video feed");
@@ -44,13 +44,13 @@ export const uploadVideo = async ({ title, description = "", file, duration = nu
     formData.append("duration", String(duration));
   }
 
-  const res = await fetch(`${API}/videos`, {
+  const res = await fetch(buildApiUrl("/videos"), {
     method: "POST",
     credentials: "include",
     body: formData,
   });
 
-  const payload = await res.json().catch(() => null);
+  const payload = await readJsonSafely(res);
 
   if (!res.ok) {
     throw new Error(payload?.message || "Video upload failed");
@@ -60,14 +60,14 @@ export const uploadVideo = async ({ title, description = "", file, duration = nu
 };
 
 export const submitVideoReview = async (videoId, { rating, comment = "" }) => {
-  const res = await fetch(`${API}/videos/${videoId}/reviews`, {
+  const res = await fetch(buildApiUrl(`/videos/${videoId}/reviews`), {
     method: "POST",
     credentials: "include",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ rating, comment }),
   });
 
-  const payload = await res.json().catch(() => null);
+  const payload = await readJsonSafely(res);
 
   if (!res.ok) {
     const err = new Error(payload?.message || "Unable to submit review");
@@ -79,12 +79,12 @@ export const submitVideoReview = async (videoId, { rating, comment = "" }) => {
 };
 
 export const getVideoDetails = async (videoId) => {
-  const res = await fetch(`${API}/videos/${videoId}`, {
+  const res = await fetch(buildApiUrl(`/videos/${videoId}`), {
     credentials: "include",
     cache: "no-store",
   });
 
-  const payload = await res.json().catch(() => null);
+  const payload = await readJsonSafely(res);
 
   if (!res.ok) {
     throw new Error(payload?.message || "Unable to load video details");

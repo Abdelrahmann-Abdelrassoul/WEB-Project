@@ -22,7 +22,12 @@ const protect = catchAsync(async (req, res, next) => {
     return next(new AppError("You are not logged in. Please provide a token.", 401));
   }
 
-  const decoded = jwt.verify(token, process.env.JWT_SECRET);
+  let decoded;
+  try {
+    decoded = jwt.verify(token, process.env.JWT_SECRET);
+  } catch {
+    return next(new AppError("Invalid or expired token. Please log in again.", 401));
+  }
 
   const currentUser = await User.findById(decoded.id);
   if (!currentUser) {

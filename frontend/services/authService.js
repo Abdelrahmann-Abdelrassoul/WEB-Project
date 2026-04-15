@@ -1,8 +1,8 @@
-const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
+import { buildApiUrl, readJsonSafely } from "./api.js";
 
 // Register
 export const register = async (username, email, password) => {
-  const res = await fetch(`${API}/auth/register`, {
+  const res = await fetch(buildApiUrl("/auth/register"), {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -12,8 +12,8 @@ export const register = async (username, email, password) => {
   });
 
   if (!res.ok) {
-    const error = await res.json();
-    throw new Error(error.message || "Registration failed");
+    const error = await readJsonSafely(res);
+    throw new Error(error?.message || "Registration failed");
   }
 
   return res.json();
@@ -21,7 +21,7 @@ export const register = async (username, email, password) => {
 
 // Login (cookie will be set automatically by backend)
 export const login = async (email, password) => {
-  const res = await fetch(`${API}/auth/login`, {
+  const res = await fetch(buildApiUrl("/auth/login"), {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -31,8 +31,8 @@ export const login = async (email, password) => {
   });
 
   if (!res.ok) {
-    const error = await res.json();
-    throw new Error(error.message || "Login failed");
+    const error = await readJsonSafely(res);
+    throw new Error(error?.message || "Login failed");
   }
 
   return res.json();
@@ -40,7 +40,7 @@ export const login = async (email, password) => {
 
 // Get current user
 export const getMe = async () => {
-  const res = await fetch(`${API}/users/me`, {
+  const res = await fetch(buildApiUrl("/users/me"), {
     credentials: "include",
   });
 
@@ -53,7 +53,7 @@ export const getMe = async () => {
 
 export const logout = async () => {
   try {
-    const res = await fetch(`${API}/auth/logout`, {
+    const res = await fetch(buildApiUrl("/auth/logout"), {
       method: "POST",
       credentials: "include",
     });

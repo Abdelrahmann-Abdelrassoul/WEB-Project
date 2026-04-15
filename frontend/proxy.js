@@ -2,7 +2,7 @@
 const GUEST_ONLY_ROUTES = ["/login", "/register"];
 
 // Define which routes require authentication
-const PROTECTED_ROUTES = ["/upload", "/settings", "/profile"];
+const PROTECTED_ROUTES = ["/upload", "/settings", "/profile", "/admin"];
 
 export default function proxy(req) {
   const token = req.cookies.get("token");
@@ -38,6 +38,7 @@ export const config = {
     "/upload/:path*", 
     "/settings/:path*", 
     "/profile/:path*",
+    "/admin/:path*",
     "/login",
     "/register"
   ],

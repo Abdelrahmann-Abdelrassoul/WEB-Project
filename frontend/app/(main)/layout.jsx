@@ -7,7 +7,7 @@ import Navbar from "../../components/layout/Navbar";
 import LoadingScreen from "../../components/ui/LoadingScreen";
 
 // Define which routes require authentication
-const PROTECTED_ROUTES = ["/upload", "/settings", "/profile"];
+const PROTECTED_ROUTES = ["/upload", "/settings", "/profile", "/admin"];
 
 export default function MainLayout({ children }) {
   const { user, loading } = useAuth();

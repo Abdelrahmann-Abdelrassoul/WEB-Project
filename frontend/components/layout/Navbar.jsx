@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuthContext } from "../../context/AuthContext.jsx";
 import { logout } from "../../services/authService.js";
-import { Home, Upload, User, LogOut, Menu, X, Settings, LogIn } from "lucide-react";
+import { Home, Upload, User, LogOut, Menu, X, Settings, LogIn, Shield } from "lucide-react";
 
 export default function Navbar() {
   const { user, refetchUser } = useAuthContext();
@@ -32,7 +32,7 @@ export default function Navbar() {
       router.refresh();
     } catch (error) {
       console.error("Logout error:", error);
-      await refetch(); // Still refetch to clear user state
+      await refetchUser(); // Still refetch to clear user state
       router.push("/");
     } finally {
       setIsLoggingOut(false);
@@ -90,6 +90,15 @@ export default function Navbar() {
                   <Settings size={18} />
                   <span>Settings</span>
                 </Link>
+                {user?.role === "admin" ? (
+                  <Link
+                    href="/admin"
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl text-gray-300 hover:text-white hover:bg-white/10 transition-all duration-200"
+                  >
+                    <Shield size={18} />
+                    <span>Admin</span>
+                  </Link>
+                ) : null}
                 <div className="ml-4 pl-4 border-l border-white/10">
                   <div className="flex items-center gap-3">
                     <div className="text-right">
@@ -148,6 +157,12 @@ export default function Navbar() {
               <Upload size={22} />
               <span className="text-xs">Upload</span>
             </Link>
+            {user?.role === "admin" ? (
+              <Link href="/admin" className="flex flex-col items-center gap-1 px-4 py-1 text-gray-400 hover:text-white transition-colors">
+                <Shield size={22} />
+                <span className="text-xs">Admin</span>
+              </Link>
+            ) : null}
             {user?._id && (
               <Link href={`/profile/${user._id}`} className="flex flex-col items-center gap-1 px-4 py-1 text-gray-400 hover:text-white transition-colors">
                 <User size={22} />
@@ -188,6 +203,16 @@ export default function Navbar() {
           <div className="fixed inset-0 bg-black/50 z-40 md:hidden" onClick={() => setIsOpen(false)} />
           <div className="fixed bottom-20 left-4 right-4 z-50 bg-black/90 backdrop-blur-xl rounded-2xl border border-white/10 p-4 md:hidden animate-slide-up">
             <div className="flex flex-col gap-2">
+              {user?.role === "admin" ? (
+                <Link
+                  href="/admin"
+                  onClick={() => setIsOpen(false)}
+                  className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300 hover:text-white hover:bg-white/10"
+                >
+                  <Shield size={20} />
+                  <span>Admin Panel</span>
+                </Link>
+              ) : null}
               <Link
                 href="/settings"
                 onClick={() => setIsOpen(false)}
