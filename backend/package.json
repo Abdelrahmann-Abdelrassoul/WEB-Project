@@ -9,7 +9,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon server.js",
-    "start": "node server.js"
+    "start": "node server.js",
+    "promote-admin": "node scripts/promoteUserToAdmin.js"
   },
   "keywords": [],
   "author": "",
