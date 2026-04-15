@@ -36,3 +36,19 @@ export const listReviewsByVideo = async (videoId) => {
     .populate("user", "username avatarKey")
     .lean();
 };
+
+export const getReviewById = async (reviewId) => {
+  return Review.findById(reviewId);
+};
+
+export const updateReview = async (reviewId, updates) => {
+  return Review.findByIdAndUpdate(
+    reviewId,
+    { $set: updates },
+    { new: true, runValidators: true }
+  ).populate("user", "username avatarKey");
+};
+
+export const deleteReview = async (reviewId) => {
+  return Review.findByIdAndDelete(reviewId);
+};

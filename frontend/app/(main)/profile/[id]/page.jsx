@@ -8,6 +8,7 @@ import { CalendarDays, Eye, UserRound } from "lucide-react";
 import VideoPlayer from "../../../../components/ui/VideoPlayer";
 import LoadingSpinner from "../../../../components/ui/LoadingSpinner";
 import { getVideos } from "../../../../services/videoService";
+import { isOwner } from "../../../../utils/ownership";
 
 export default function UserProfilePage() {
   const { id } = useParams();
@@ -16,6 +17,8 @@ export default function UserProfilePage() {
   const [videos, setVideos] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
+  const canManageVideo = isOwner(user?._id, id);
+  
 
   useEffect(() => {
     let isMounted = true;
@@ -158,6 +161,7 @@ export default function UserProfilePage() {
             </div>
           ) : null}
         </div>
+        
       </div>
     </div>
   );

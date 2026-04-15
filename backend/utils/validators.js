@@ -45,6 +45,16 @@ const createReviewSchema = z.object({
   comment: z.string().max(500, "Comment must not exceed 500 characters").optional().default(""),
 });
 
+const updateReviewSchema = z
+  .object({
+    rating: z.number().int().min(1, "Rating must be at least 1").max(5, "Rating must not exceed 5").optional(),
+    comment: z.string().max(500, "Comment must not exceed 500 characters").optional(),
+  })
+  .refine((data) => data.rating !== undefined || data.comment !== undefined, {
+    message: "Provide at least one field to update",
+    path: ["rating"],
+  });
+
 export {
   registerSchema,
   loginSchema,
@@ -53,4 +63,5 @@ export {
   createVideoSchema,
   updateVideoSchema,
   createReviewSchema,
+  updateReviewSchema,
 };

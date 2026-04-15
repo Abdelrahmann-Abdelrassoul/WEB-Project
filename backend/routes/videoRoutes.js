@@ -1,7 +1,7 @@
 import express from "express";
 import { listVideos, createVideo, updateVideo, deleteVideo, loadVideo, streamVideo, getVideo, listVideoReviews } from "../controllers/videoController.js";
-import { createReview } from "../controllers/reviewController.js";
-import { createVideoSchema, updateVideoSchema, createReviewSchema } from "../utils/validators.js";
+import { createReview, loadReview, updateReview, deleteReview as deleteReviewController } from "../controllers/reviewController.js";
+import { createVideoSchema, updateVideoSchema, createReviewSchema, updateReviewSchema } from "../utils/validators.js";
 import validate from "../middleware/validateMiddleware.js";
 import { optionalProtect, protect } from "../middleware/authMiddleware.js";
 import { handleVideoUpload } from "../middleware/uploadMiddleware.js";
@@ -164,6 +164,25 @@ router.post(
   loadVideo,
   validate(createReviewSchema),
   createReview
+);
+
+router.patch(
+  "/:id/reviews/:reviewId",
+  protect,
+  loadVideo,
+  loadReview,
+  checkOwnership((req) => req.review.user),
+  validate(updateReviewSchema),
+  updateReview
+);
+
+router.delete(
+  "/:id/reviews/:reviewId",
+  protect,
+  loadVideo,
+  loadReview,
+  checkOwnership((req) => req.review.user),
+  deleteReviewController
 );
 
 router.get(

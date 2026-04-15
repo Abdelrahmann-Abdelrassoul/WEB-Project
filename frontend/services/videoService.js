@@ -95,3 +95,61 @@ export const getVideoDetails = async (videoId) => {
     reviews: payload?.data?.reviews ?? [],
   };
 };
+
+export const deleteVideo = async (videoId) => {
+  const res = await fetch(`${API}/videos/${videoId}`, {
+    method: "DELETE",
+    credentials: "include",
+  });
+
+  if (!res.ok) {
+    const payload = await res.json().catch(() => null);
+    throw new Error(payload?.message || "Unable to delete video");
+  }
+};
+
+export const updateVideo = async (videoId, { title, description }) => {
+  const res = await fetch(`${API}/videos/${videoId}`, {
+    method: "PATCH",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ title, description }),
+  });
+
+  const payload = await res.json().catch(() => null);
+
+  if (!res.ok) {
+    throw new Error(payload?.message || "Unable to update video");
+  }
+
+  return payload?.data?.video ?? null;
+};
+
+export const updateReview = async (videoId, reviewId, { rating, comment }) => {
+  const res = await fetch(`${API}/videos/${videoId}/reviews/${reviewId}`, {
+    method: "PATCH",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ rating, comment }),
+  });
+
+  const payload = await res.json().catch(() => null);
+
+  if (!res.ok) {
+    throw new Error(payload?.message || "Unable to update review");
+  }
+
+  return payload?.data?.review ?? null;
+};
+
+export const deleteReview = async (videoId, reviewId) => {
+  const res = await fetch(`${API}/videos/${videoId}/reviews/${reviewId}`, {
+    method: "DELETE",
+    credentials: "include",
+  });
+
+  if (!res.ok) {
+    const payload = await res.json().catch(() => null);
+    throw new Error(payload?.message || "Unable to delete review");
+  }
+};
