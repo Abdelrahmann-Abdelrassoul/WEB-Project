@@ -1,6 +1,8 @@
 import EmailQueue from "../models/emailQueueModel.js";
 import Notification from "../models/notificationModel.js";
 import User from "../models/userModel.js";
+import { sendEngagementEmail } from "./emailService.js";
+import Video from "../models/videoModel.js";
 
 export const getNotificationRecipient = async (recipientId) => {
   if (!recipientId) {
@@ -71,13 +73,28 @@ export const trackNotificationEvent = async ({
         })
       : null,
     emailEnabled
-      ? EmailQueue.create({
-          recipient: recipientId,
-          actor: actorId,
-          type,
-          entityId,
-          entityModel,
-        })
+      ? (async () => {
+          const [queueRecord, recipientFull, actorFull, video] = await Promise.all([
+            EmailQueue.create({ recipient: recipientId, actor: actorId, type, entityId, entityModel }),
+            User.findById(recipientId).select("email username"),
+            User.findById(actorId).select("username"),
+            entityModel === "Video" && entityId
+              ? Video.findById(entityId).select("title").lean()
+              : Promise.resolve(null),
+          ]);
+
+          sendEngagementEmail({
+            recipientEmail: recipientFull.email,
+            recipientUsername: recipientFull.username,
+            actorUsername: actorFull.username,
+            type,
+            videoTitle: video?.title || "",
+          }).catch((err) =>
+            console.error(`[Email] Failed to send engagement email (${type}):`, err.message)
+          );
+
+          return queueRecord;
+        })()
       : null,
   ]);
 
