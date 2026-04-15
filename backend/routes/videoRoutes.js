@@ -1,5 +1,16 @@
 import express from "express";
-import { listVideos, createVideo, updateVideo, deleteVideo, loadVideo, streamVideo, getVideo, listVideoReviews } from "../controllers/videoController.js";
+import {
+  listVideos,
+  createVideo,
+  updateVideo,
+  deleteVideo,
+  loadVideo,
+  streamVideo,
+  getVideo,
+  listVideoReviews,
+  likeVideo,
+  unlikeVideo,
+} from "../controllers/videoController.js";
 import { createReview, loadReview, updateReview, deleteReview as deleteReviewController } from "../controllers/reviewController.js";
 import { createVideoSchema, updateVideoSchema, createReviewSchema, updateReviewSchema } from "../utils/validators.js";
 import validate from "../middleware/validateMiddleware.js";
@@ -164,6 +175,20 @@ router.post(
   loadVideo,
   validate(createReviewSchema),
   createReview
+);
+
+router.post(
+  "/:id/likes",
+  protect,
+  loadVideo,
+  likeVideo
+);
+
+router.delete(
+  "/:id/likes",
+  protect,
+  loadVideo,
+  unlikeVideo
 );
 
 router.patch(

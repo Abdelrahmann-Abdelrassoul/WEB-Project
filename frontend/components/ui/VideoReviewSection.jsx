@@ -9,7 +9,7 @@ import { submitVideoReview } from "../../services/videoService";
 
 const MAX_COMMENT = 500;
 
-export default function VideoReviewSection({ videoId, className = "" }) {
+export default function VideoReviewSection({ videoId, className = "", onSubmitted }) {
   const { isAuthenticated } = useAuthContext();
   const { showError } = useApp();
   const [rating, setRating] = useState(null);
@@ -26,8 +26,9 @@ export default function VideoReviewSection({ videoId, className = "" }) {
 
     setSubmitting(true);
     try {
-      await submitVideoReview(videoId, { rating, comment: comment.trim() });
+      const savedReview = await submitVideoReview(videoId, { rating, comment: comment.trim() });
       setSubmitted(true);
+      onSubmitted?.(savedReview);
     } catch (err) {
       showError(err.message || "Could not submit your review");
     } finally {

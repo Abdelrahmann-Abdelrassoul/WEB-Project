@@ -6,6 +6,12 @@ import {
   getVideoByID,
 } from "../services/videoServices.js";
 import { listReviewsByVideo } from "../services/reviewService.js";
+import {
+  likeVideo as likeVideoService,
+  unlikeVideo as unlikeVideoService,
+  listLikeMetrics,
+  listLikeMetricsForVideo,
+} from "../services/likeService.js";
 import catchAsync from "../utils/catchAsync.js";
 import AppError from "../utils/appError.js";
 import { GetObjectCommand } from "@aws-sdk/client-s3";
@@ -43,6 +49,27 @@ const withPlaybackUrl = async (video) => {
   return enrichedVideo ?? null;
 };
 
+const withLikeMetrics = async ({ videos = [], currentUserId = null }) => {
+  if (!videos.length) {
+    return [];
+  }
+
+  const videoIds = videos.map((video) => video?._id).filter(Boolean);
+  const { likeCountByVideoId, likedVideoIds } = await listLikeMetrics({
+    videoIds,
+    currentUserId,
+  });
+
+  return videos.map((video) => {
+    const key = String(video._id);
+    return {
+      ...video,
+      likeCount: likeCountByVideoId.get(key) ?? 0,
+      likedByCurrentUser: likedVideoIds.has(key),
+    };
+  });
+};
+
 const listVideos = catchAsync(async (req, res) => {
   const parsedLimit = Number.parseInt(req.query.limit, 10);
   const parsedSkip = Number.parseInt(req.query.skip, 10);
@@ -63,6 +90,10 @@ const listVideos = catchAsync(async (req, res) => {
   });
 
   const videosWithPlayback = await withPlaybackUrls(pagination.videos);
+  const videosWithLikes = await withLikeMetrics({
+    videos: videosWithPlayback,
+    currentUserId: req.user?.id ?? null,
+  });
 
   res.status(200).json({
     status: "success",
@@ -76,7 +107,7 @@ const listVideos = catchAsync(async (req, res) => {
       feed: pagination.feed,
     },
     data: {
-      videos: videosWithPlayback,
+      videos: videosWithLikes,
     },
   });
 });
@@ -127,9 +158,13 @@ const getVideo = catchAsync(async (req, res, next) => {
     return next(new AppError("Video not found", 404));
   }
 
-  const [videoDoc, reviews] = await Promise.all([
+  const [videoDoc, reviews, likeMetrics] = await Promise.all([
     getVideoByID(req.video._id),
     listReviewsByVideo(req.video._id),
+    listLikeMetricsForVideo({
+      videoId: req.video._id,
+      currentUserId: req.user?.id ?? null,
+    }),
   ]);
 
   const populatedVideo = videoDoc
@@ -148,10 +183,42 @@ const getVideo = catchAsync(async (req, res, next) => {
     data: {
       video: {
         ...videoWithPlayback,
+        likeCount: likeMetrics.likeCount,
+        likedByCurrentUser: likeMetrics.likedByCurrentUser,
         reviewCount,
         avgRating: Number(avgRating.toFixed(2)),
       },
       reviews,
+    },
+  });
+});
+
+const likeVideo = catchAsync(async (req, res) => {
+  const likeCount = await likeVideoService({
+    videoId: req.video._id,
+    userId: req.user.id,
+  });
+
+  res.status(200).json({
+    status: "success",
+    data: {
+      liked: true,
+      likeCount,
+    },
+  });
+});
+
+const unlikeVideo = catchAsync(async (req, res) => {
+  const likeCount = await unlikeVideoService({
+    videoId: req.video._id,
+    userId: req.user.id,
+  });
+
+  res.status(200).json({
+    status: "success",
+    data: {
+      liked: false,
+      likeCount,
     },
   });
 });
@@ -192,4 +259,15 @@ const streamVideo = catchAsync(async (req, res, next) => {
   });
 });
 
-export { listVideos, createVideo, updateVideo, deleteVideo, loadVideo, streamVideo, getVideo, listVideoReviews };
+export {
+  listVideos,
+  createVideo,
+  updateVideo,
+  deleteVideo,
+  loadVideo,
+  streamVideo,
+  getVideo,
+  listVideoReviews,
+  likeVideo,
+  unlikeVideo,
+};

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { CalendarDays, Eye, RefreshCw, Star, UserRound } from "lucide-react";
+import { CalendarDays, Eye, Heart, RefreshCw, Star, UserRound } from "lucide-react";
 import LoadingSpinner from "../../../../components/ui/LoadingSpinner";
 import VideoPlayer from "../../../../components/ui/VideoPlayer";
 import VideoReviewSection from "../../../../components/ui/VideoReviewSection";
@@ -11,6 +11,8 @@ import {
   deleteReview,
   deleteVideo,
   getVideoDetails,
+  likeVideo as likeVideoService,
+  unlikeVideo as unlikeVideoService,
   updateReview,
   updateVideo,
 } from "../../../../services/videoService";
@@ -47,6 +49,11 @@ export default function VideoDetailsPage() {
   const [videoDraft, setVideoDraft] = useState({ title: "", description: "" });
   const [editingReviewId, setEditingReviewId] = useState(null);
   const [reviewDraft, setReviewDraft] = useState({ rating: 5, comment: "" });
+  const [likeState, setLikeState] = useState({
+    liked: false,
+    count: 0,
+    pending: false,
+  });
   const { user } = useAuthContext();
   const { showError } = useApp();
   const isVideoOwner = isOwner(user?._id, video?.owner?._id);
@@ -60,6 +67,12 @@ export default function VideoDetailsPage() {
       const payload = await getVideoDetails(id);
       setVideo(payload.video);
       setReviews(payload.reviews);
+      setLikeState((current) => ({
+        ...current,
+        liked: Boolean(payload.video?.likedByCurrentUser),
+        count: Number(payload.video?.likeCount ?? 0),
+        pending: false,
+      }));
       setVideoDraft({
         title: payload.video?.title || "",
         description: payload.video?.description || "",
@@ -174,6 +187,60 @@ export default function VideoDetailsPage() {
     }
   }, [editingReviewId, loadVideoDetails, onCancelEditReview, showError, video?._id]);
 
+  const onToggleLike = useCallback(async () => {
+    if (!video?._id || likeState.pending) {
+      return;
+    }
+
+    const previous = likeState;
+    const nextLiked = !previous.liked;
+
+    setLikeState({
+      liked: nextLiked,
+      count: Math.max(0, previous.count + (nextLiked ? 1 : -1)),
+      pending: true,
+    });
+
+    try {
+      const result = nextLiked
+        ? await likeVideoService(video._id)
+        : await unlikeVideoService(video._id);
+
+      setLikeState((current) => ({
+        ...current,
+        liked: Boolean(result?.liked ?? nextLiked),
+        count: Number(result?.likeCount ?? current.count),
+        pending: false,
+      }));
+    } catch (error) {
+      setLikeState({ ...previous, pending: false });
+      showError(error.message || "Failed to update like");
+    }
+  }, [likeState, showError, video?._id]);
+
+  const handleReviewSubmitted = useCallback((newReview) => {
+    if (!newReview || !video) {
+      return;
+    }
+
+    setReviews((current) => [newReview, ...current]);
+    setVideo((currentVideo) => {
+      if (!currentVideo) {
+        return currentVideo;
+      }
+      const currentCount = Number(currentVideo.reviewCount ?? 0);
+      const currentAvg = Number(currentVideo.avgRating ?? 0);
+      const nextCount = currentCount + 1;
+      const nextAvg = ((currentAvg * currentCount) + Number(newReview.rating || 0)) / nextCount;
+
+      return {
+        ...currentVideo,
+        reviewCount: nextCount,
+        avgRating: Number(nextAvg.toFixed(2)),
+      };
+    });
+  }, [video]);
+
   if (isLoading) {
     return (
       <div className="flex min-h-[420px] items-center justify-center rounded-2xl border border-white/10 bg-white/5">
@@ -204,7 +271,7 @@ export default function VideoDetailsPage() {
             Video source unavailable
           </div>
         )}
-        <VideoReviewSection videoId={video._id} />
+        <VideoReviewSection videoId={video._id} onSubmitted={handleReviewSubmitted} />
       </div>
 
       <section className="space-y-4 rounded-2xl border border-white/10 bg-white/5 p-6">
@@ -250,6 +317,19 @@ export default function VideoDetailsPage() {
             <Star size={12} />
             {Number(video.avgRating ?? 0).toFixed(1)} avg ({video.reviewCount ?? 0} reviews)
           </span>
+          <button
+            type="button"
+            onClick={onToggleLike}
+            disabled={likeState.pending}
+            className={`inline-flex items-center gap-1 rounded-full border px-2 py-1 transition ${
+              likeState.liked
+                ? "border-rose-400/35 bg-rose-500/10 text-rose-200"
+                : "border-white/20 bg-white/5 text-gray-200"
+            } ${likeState.pending ? "cursor-not-allowed opacity-60" : "hover:bg-white/10"}`}
+          >
+            <Heart size={12} className={likeState.liked ? "fill-rose-300 text-rose-300" : ""} />
+            {likeState.count}
+          </button>
         </div>
         {isVideoOwner ? (
           <div className="flex gap-2">
