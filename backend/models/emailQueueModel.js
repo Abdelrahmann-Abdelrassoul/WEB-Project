@@ -29,7 +29,7 @@ const emailQueueSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["queued", "sent", "failed"],
+      enum: ["queued", "sent", "failed", "skipped"],
       default: "queued",
     },
   },

@@ -3,16 +3,17 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { CalendarDays, Eye, Heart, RefreshCw, Star, UserRound } from "lucide-react";
+import { CalendarDays, Eye, RefreshCw, Star, UserRound } from "lucide-react";
 import LoadingSpinner from "../../../../components/ui/LoadingSpinner";
 import VideoPlayer from "../../../../components/ui/VideoPlayer";
-import VideoReviewSection from "../../../../components/ui/VideoReviewSection";
+import CommentComposer from "../../../../components/ui/CommentComposer";
+import LikeButton from "../../../../components/ui/LikeButton";
+import ShareButton from "../../../../components/ui/ShareButton";
 import {
   deleteReview,
   deleteVideo,
   getVideoDetails,
-  likeVideo as likeVideoService,
-  unlikeVideo as unlikeVideoService,
+  submitVideoReview,
   updateReview,
   updateVideo,
 } from "../../../../services/videoService";
@@ -49,14 +50,14 @@ export default function VideoDetailsPage() {
   const [videoDraft, setVideoDraft] = useState({ title: "", description: "" });
   const [editingReviewId, setEditingReviewId] = useState(null);
   const [reviewDraft, setReviewDraft] = useState({ rating: 5, comment: "" });
-  const [likeState, setLikeState] = useState({
-    liked: false,
-    count: 0,
-    pending: false,
-  });
   const { user } = useAuthContext();
   const { showError } = useApp();
   const isVideoOwner = isOwner(user?._id, video?.owner?._id);
+  const hasCurrentUserReview = reviews.some((review) => isOwner(user?._id, review.user?._id));
+  const reviewCount = reviews.length;
+  const avgRating = reviewCount
+    ? reviews.reduce((sum, review) => sum + Number(review.rating || 0), 0) / reviewCount
+    : 0;
 
   const loadVideoDetails = useCallback(async () => {
     if (!id) return;
@@ -67,12 +68,6 @@ export default function VideoDetailsPage() {
       const payload = await getVideoDetails(id);
       setVideo(payload.video);
       setReviews(payload.reviews);
-      setLikeState((current) => ({
-        ...current,
-        liked: Boolean(payload.video?.likedByCurrentUser),
-        count: Number(payload.video?.likeCount ?? 0),
-        pending: false,
-      }));
       setVideoDraft({
         title: payload.video?.title || "",
         description: payload.video?.description || "",
@@ -187,59 +182,25 @@ export default function VideoDetailsPage() {
     }
   }, [editingReviewId, loadVideoDetails, onCancelEditReview, showError, video?._id]);
 
-  const onToggleLike = useCallback(async () => {
-    if (!video?._id || likeState.pending) {
-      return;
-    }
+  const addOptimisticReview = useCallback((optimisticReview) => {
+    setReviews((current) => [optimisticReview, ...current]);
+  }, []);
 
-    const previous = likeState;
-    const nextLiked = !previous.liked;
+  const commitOptimisticReview = useCallback((optimisticId, savedReview) => {
+    setReviews((current) => {
+      const replaced = current.map((review) =>
+        review._id === optimisticId ? savedReview : review
+      );
 
-    setLikeState({
-      liked: nextLiked,
-      count: Math.max(0, previous.count + (nextLiked ? 1 : -1)),
-      pending: true,
+      return replaced.some((review) => review._id === savedReview?._id)
+        ? replaced
+        : [savedReview, ...replaced];
     });
+  }, []);
 
-    try {
-      const result = nextLiked
-        ? await likeVideoService(video._id)
-        : await unlikeVideoService(video._id);
-
-      setLikeState((current) => ({
-        ...current,
-        liked: Boolean(result?.liked ?? nextLiked),
-        count: Number(result?.likeCount ?? current.count),
-        pending: false,
-      }));
-    } catch (error) {
-      setLikeState({ ...previous, pending: false });
-      showError(error.message || "Failed to update like");
-    }
-  }, [likeState, showError, video?._id]);
-
-  const handleReviewSubmitted = useCallback((newReview) => {
-    if (!newReview || !video) {
-      return;
-    }
-
-    setReviews((current) => [newReview, ...current]);
-    setVideo((currentVideo) => {
-      if (!currentVideo) {
-        return currentVideo;
-      }
-      const currentCount = Number(currentVideo.reviewCount ?? 0);
-      const currentAvg = Number(currentVideo.avgRating ?? 0);
-      const nextCount = currentCount + 1;
-      const nextAvg = ((currentAvg * currentCount) + Number(newReview.rating || 0)) / nextCount;
-
-      return {
-        ...currentVideo,
-        reviewCount: nextCount,
-        avgRating: Number(nextAvg.toFixed(2)),
-      };
-    });
-  }, [video]);
+  const rollbackOptimisticReview = useCallback((optimisticId) => {
+    setReviews((current) => current.filter((review) => review._id !== optimisticId));
+  }, []);
 
   if (isLoading) {
     return (
@@ -271,7 +232,16 @@ export default function VideoDetailsPage() {
             Video source unavailable
           </div>
         )}
-        <VideoReviewSection videoId={video._id} onSubmitted={handleReviewSubmitted} />
+        <CommentComposer
+          resourceId={video._id}
+          hasSubmitted={hasCurrentUserReview}
+          submitComment={({ resourceId, rating, comment }) =>
+            submitVideoReview(resourceId, { rating, comment })
+          }
+          onOptimisticAdd={addOptimisticReview}
+          onOptimisticCommit={commitOptimisticReview}
+          onOptimisticRollback={rollbackOptimisticReview}
+        />
       </div>
 
       <section className="space-y-4 rounded-2xl border border-white/10 bg-white/5 p-6">
@@ -315,21 +285,15 @@ export default function VideoDetailsPage() {
           </span>
           <span className="inline-flex items-center gap-1 rounded-full border border-yellow-400/25 bg-yellow-500/10 px-2 py-1 text-yellow-100">
             <Star size={12} />
-            {Number(video.avgRating ?? 0).toFixed(1)} avg ({video.reviewCount ?? 0} reviews)
+            {Number(avgRating || 0).toFixed(1)} avg ({reviewCount} reviews)
           </span>
-          <button
-            type="button"
-            onClick={onToggleLike}
-            disabled={likeState.pending}
-            className={`inline-flex items-center gap-1 rounded-full border px-2 py-1 transition ${
-              likeState.liked
-                ? "border-rose-400/35 bg-rose-500/10 text-rose-200"
-                : "border-white/20 bg-white/5 text-gray-200"
-            } ${likeState.pending ? "cursor-not-allowed opacity-60" : "hover:bg-white/10"}`}
-          >
-            <Heart size={12} className={likeState.liked ? "fill-rose-300 text-rose-300" : ""} />
-            {likeState.count}
-          </button>
+          <LikeButton
+            key={`${video._id}-${video.likeCount}-${video.likedByCurrentUser ? "liked" : "unliked"}`}
+            videoId={video._id}
+            initialLiked={video.likedByCurrentUser}
+            initialCount={video.likeCount}
+          />
+          <ShareButton title={video.title} />
         </div>
         {isVideoOwner ? (
           <div className="flex gap-2">
@@ -438,7 +402,14 @@ export default function VideoDetailsPage() {
                       {review.comment?.trim() ? review.comment : "No written comment."}
                     </p>
                   )}
-                  <p className="mt-2 text-xs text-gray-500">{new Date(review.createdAt).toLocaleString()}</p>
+                  <div className="mt-2 flex items-center justify-between gap-3">
+                    <p className="text-xs text-gray-500">{new Date(review.createdAt).toLocaleString()}</p>
+                    {review.pending ? (
+                      <span className="rounded-full border border-amber-400/30 bg-amber-500/10 px-2 py-0.5 text-[10px] uppercase tracking-[0.2em] text-amber-100">
+                        Sending
+                      </span>
+                    ) : null}
+                  </div>
                   {isReviewOwner ? (
                     <div className="mt-3 flex gap-2">
                       {!isEditingThisReview ? (
