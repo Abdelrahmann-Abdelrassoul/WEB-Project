@@ -6,6 +6,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { useAuthContext } from "../../context/AuthContext.jsx";
 import { logout } from "../../services/authService.js";
 import { Home, Upload, User, LogOut, Menu, X, Settings, LogIn, Shield } from "lucide-react";
+import Image from "next/image";
 
 export default function Navbar() {
   const { user, refetchUser } = useAuthContext();
@@ -51,8 +52,13 @@ export default function Navbar() {
       } rounded-2xl px-6 py-3`}>
         <div className="flex items-center justify-between">
           {/* Logo */}
-          <Link href="/" className="text-2xl font-bold bg-gradient-to-r from-purple-500 to-pink-500 bg-clip-text text-transparent">
-            ClipSphere
+          <Link href="/" className="flex items-center gap-2">
+            <Image
+              src="/images/Full_logo.png"
+              alt="ClipSphere"
+              width={200}
+              height={50}
+            />
           </Link>
 
           {/* Navigation Links - Show different based on auth state */}
