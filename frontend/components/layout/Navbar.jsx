@@ -4,12 +4,14 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuthContext } from "../../context/AuthContext.jsx";
+import { useSocket } from "../../context/SocketContext.jsx";
 import { logout } from "../../services/authService.js";
-import { Home, Upload, User, LogOut, Menu, X, Settings, LogIn, Shield } from "lucide-react";
+import { Home, Upload, User, LogOut, Menu, X, Settings, LogIn, Shield, Bell } from "lucide-react";
 import Image from "next/image";
 
 export default function Navbar() {
   const { user, refetchUser } = useAuthContext();
+  const { badgeCount, clearBadge } = useSocket();
   const router = useRouter();
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
@@ -96,6 +98,20 @@ export default function Navbar() {
                   <Settings size={18} />
                   <span>Settings</span>
                 </Link>
+                {/* Issue #106 – Global Engagement Hub badge */}
+                <button
+                  onClick={clearBadge}
+                  className="relative flex items-center gap-2 px-4 py-2 rounded-xl text-gray-300 hover:text-white hover:bg-white/10 transition-all duration-200"
+                  aria-label={badgeCount > 0 ? `${badgeCount} unread notifications` : "Activity"}
+                >
+                  <Bell size={18} />
+                  <span>Activity</span>
+                  {badgeCount > 0 && (
+                    <span className="absolute top-1.5 right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white leading-none">
+                      {badgeCount > 99 ? "99+" : badgeCount}
+                    </span>
+                  )}
+                </button>
                 {user?.role === "admin" ? (
                   <Link
                     href="/admin"
@@ -163,6 +179,20 @@ export default function Navbar() {
               <Upload size={22} />
               <span className="text-xs">Upload</span>
             </Link>
+            {/* Issue #106 – mobile Activity badge */}
+            <button
+              onClick={clearBadge}
+              className="relative flex flex-col items-center gap-1 px-4 py-1 text-gray-400 hover:text-white transition-colors"
+              aria-label={badgeCount > 0 ? `${badgeCount} unread notifications` : "Activity"}
+            >
+              <Bell size={22} />
+              <span className="text-xs">Activity</span>
+              {badgeCount > 0 && (
+                <span className="absolute top-0 right-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white leading-none">
+                  {badgeCount > 99 ? "99+" : badgeCount}
+                </span>
+              )}
+            </button>
             {user?.role === "admin" ? (
               <Link href="/admin" className="flex flex-col items-center gap-1 px-4 py-1 text-gray-400 hover:text-white transition-colors">
                 <Shield size={22} />

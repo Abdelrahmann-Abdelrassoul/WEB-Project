@@ -1,8 +1,8 @@
 import { AuthProvider } from "../context/AuthContext.jsx";
 import { AppProvider } from "../context/AppContext.jsx";
+import { SocketProvider } from "../context/SocketContext.jsx";
 import "./globals.css";
 import "@flaticon/flaticon-uicons/css/all/all.css";
-import { icons } from "lucide-react";
 
 export const metadata = {
   title: "ClipSphere",
@@ -18,7 +18,9 @@ export default function RootLayout({ children }) {
       <body className="bg-black">
         <AppProvider>
           <AuthProvider>
-            {children}
+            <SocketProvider>
+              {children}
+            </SocketProvider>
           </AuthProvider>
         </AppProvider>
       </body>

@@ -17,6 +17,7 @@ import AppError from "../utils/appError.js";
 import { GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import s3, { BUCKET_NAME } from "../config/minio.js";
+import { getIO } from "../config/socket.js";
 
 const withPlaybackUrls = async (videos = []) => {
   const enriched = await Promise.all(
@@ -198,6 +199,26 @@ const likeVideo = catchAsync(async (req, res) => {
     videoId: req.video._id,
     userId: req.user.id,
   });
+
+  // Issue #104 – emit real-time "new-like" to the video owner's private room.
+  // Skip if the liker IS the owner (no point notifying yourself).
+  const ownerId = String(req.video.owner?._id ?? req.video.owner);
+  const likerId = String(req.user._id ?? req.user.id);
+
+  if (ownerId !== likerId) {
+    try {
+      getIO().to(ownerId).emit("new-like", {
+        likerUsername: req.user.username,
+        videoTitle: req.video.title,
+        videoId: String(req.video._id),
+        likeCount,
+        timestamp: new Date().toISOString(),
+      });
+    } catch {
+      // Socket.io may not be initialised in test environments – log & continue
+      console.warn("[socket] Could not emit new-like – io not ready");
+    }
+  }
 
   res.status(200).json({
     status: "success",
