@@ -98,6 +98,12 @@ export default function Navbar() {
                   <Settings size={18} />
                   <span>Settings</span>
                 </Link>
+                <Link
+                  href="/earnings"
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl text-gray-300 hover:text-white hover:bg-white/10 transition-all duration-200"
+                >
+                  <span>Earnings</span>
+                </Link>
                 {/* Issue #106 – Global Engagement Hub badge */}
                 <button
                   onClick={clearBadge}

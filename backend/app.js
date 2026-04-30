@@ -11,6 +11,7 @@ import authRoutes from "./routes/authRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import videoRoutes from "./routes/videoRoutes.js";
+import tipRoutes from "./routes/tipRoutes.js";
 import swaggerSpec from "./config/swagger.js";
 
 
@@ -37,6 +38,10 @@ app.use(cors({
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
 }));
+app.use(
+  "/api/v1/tips/webhook",
+  express.raw({ type: "application/json" })
+);
 app.use(express.json({ limit: "10kb" }));
 app.use(cookieParser());
 
@@ -82,6 +87,7 @@ app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/users", userRoutes);
 app.use("/api/v1/admin", adminRoutes);
 app.use("/api/v1/videos", videoRoutes);
+app.use("/api/v1/tips", tipRoutes);
 
 // 404 + Global error handler
 app.use(notFoundHandler);

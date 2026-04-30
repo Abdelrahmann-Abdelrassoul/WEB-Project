@@ -9,6 +9,7 @@ import VideoPlayer from "../../../../components/ui/VideoPlayer";
 import CommentComposer from "../../../../components/ui/CommentComposer";
 import LikeButton from "../../../../components/ui/LikeButton";
 import ShareButton from "../../../../components/ui/ShareButton";
+import TipButton from "../../../../components/ui/TipButton";
 import {
   deleteReview,
   deleteVideo,
@@ -294,6 +295,10 @@ export default function VideoDetailsPage() {
             initialCount={video.likeCount}
           />
           <ShareButton title={video.title} />
+          <TipButton
+            videoId={video._id}
+            creatorId={video.owner?._id}
+          />
         </div>
         {isVideoOwner ? (
           <div className="flex gap-2">
