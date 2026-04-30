@@ -1,437 +1,187 @@
-# WEB Project – MERN Stack Video Platform
+# ClipSphere
 
-This repository contains the implementation of the **WEB Project**, a full-stack application built using the **MERN Stack (MongoDB, Express, React/Next.js, Node.js)** with additional technologies such as **MinIO, Docker, ffmpeg, and Nodemailer**.
+A short-form video platform. Users upload videos, follow each other, leave reviews, tip creators, and get notified in real time when someone likes their content.
 
-The system allows users to **upload short videos, interact with content, follow other users, leave reviews, and receive notifications**, while administrators have moderation and analytics capabilities.
+Built with Node/Express, Next.js, MongoDB, MinIO, Socket.io, and Stripe.
 
 ---
 
-# Repository Structure
+## What's inside
 
 ```
-WEB-Project
-├─ .gitignore
-├─ docker-compose.yml
-├─ README.md
-├─ backend
-│  ├─ .env
-│  ├─ app.js
-│  ├─ package-lock.json
-│  ├─ package.json
-│  ├─ server.js
-│  ├─ bruno
-│  │  ├─ bruno.json
-│  │  ├─ collection.bru
-│  │  ├─ getfollwoing.bru
-│  │  ├─ Notfication Prefences in main and app.bru
-│  │  ├─ TestingIfalreadfollow.bru
-│  │  ├─ Unfollow.bru
-│  │  ├─ user can not follow himself.bru
-│  │  ├─ UserAsignin.bru
-│  │  ├─ environments
-│  │  │  └─ Dev.bru
-│  │  └─ Testing
-│  │     ├─ folder.bru
-│  │     └─ Sign up.bru
-│  ├─ config
-│  │  └─ db.js
-│  ├─ controllers
-│  │  ├─ authController.js
-│  │  ├─ healthController.js
-│  │  ├─ reviewController.js
-│  │  ├─ userController.js
-│  │  └─ videoController.js
-│  ├─ middleware
-│  │  ├─ authMiddleware.js
-│  │  ├─ errorMiddleware.js
-│  │  ├─ ownershipMiddleware.js
-│  │  └─ validateMiddleware.js
-│  ├─ models
-│  │  ├─ emailQueueModel.js
-│  │  ├─ followModel.js
-│  │  ├─ notificationModel.js
-│  │  ├─ reviewModel.js
-│  │  ├─ userModel.js
-│  │  └─ videoModel.js
-│  ├─ routes
-│  │  ├─ authRoutes.js
-│  │  ├─ healthRoutes.js
-│  │  ├─ userRoutes.js
-│  │  └─ videoRoutes.js
-│  ├─ scripts
-│  │  └─ testModels.js
-│  ├─ services
-│  │  ├─ authService.js
-│  │  ├─ healthService.js
-│  │  ├─ notificationService.js
-│  │  ├─ reviewService.js
-│  │  ├─ userService.js
-│  │  └─ videoServices.js
-│  └─ utils
-│     ├─ appError.js
-│     ├─ catchAsync.js
-│     └─ validators.js
-└─ frontend
-   ├─ .gitignore
-   ├─ eslint.config.mjs
-   ├─ jsconfig.json
-   ├─ next.config.mjs
-   ├─ package-lock.json
-   ├─ package.json
-   ├─ postcss.config.mjs
-   ├─ README.md
-   ├─ app
-   │  ├─ favicon.ico
-   │  ├─ globals.css
-   │  ├─ layout.js
-   │  └─ page.js
-   └─ public
-      ├─ file.svg
-      ├─ globe.svg
-      ├─ next.svg
-      ├─ vercel.svg
-      └─ window.svg
+WEB-Project/
+├── docker-compose.yml        # MongoDB + MinIO
+├── backend/
+│   ├── server.js
+│   ├── app.js
+│   ├── config/               # db, minio, socket, swagger
+│   ├── controllers/
+│   ├── services/             # all business logic lives here
+│   ├── models/               # User, Video, Review, Notification, Transaction, ...
+│   ├── routes/               # auth, users, videos, tips, admin
+│   ├── middleware/           # auth, error, ownership, validation
+│   ├── sockets/              # Socket.io connection + room handler
+│   └── scripts/              # promoteUserToAdmin, processEmailQueue
+└── frontend/
+    ├── app/
+    │   ├── (auth)/           # login, register
+    │   ├── (main)/           # home, video/:id, profile/:id, settings, earnings, admin
+    │   └── tip/success/      # stripe redirect landing
+    ├── components/
+    ├── context/              # AuthContext, AppContext, SocketContext
+    └── services/             # api wrappers
 ```
 
 ---
 
-# Prerequisites
+## Prerequisites
 
-Before running the project, ensure the following are installed:
+- Node.js 18+
+- Docker (for MongoDB and MinIO)
+- ffmpeg (`ffmpeg -version` to verify)
+- Stripe CLI (for local webhook testing)
 
-- **Node.js** (v18+ recommended)
-- **npm**
-- **MongoDB**
-- **Docker Desktop**
-- **Git**
-- **ffmpeg**
+---
 
-Check installations:
+## Getting started
+
+### 1. Start the infrastructure
+
+MongoDB and MinIO run in Docker. Always start these first.
 
 ```bash
-node -v
-npm -v
-docker -v
-ffmpeg -version
-````
-
----
-
-# Clone the Repository
-
-```bash
-git clone <repo-url>
-cd WEB-Project
+docker compose up -d
 ```
 
----
+MinIO console → http://localhost:9001 (minioadmin / minioadmin)
 
-# Backend Setup (Express + MongoDB)
+If MongoDB was previously started outside of compose and is refusing connections, this fixes it:
 
-Navigate to backend:
+```bash
+docker compose down && docker compose up -d
+```
+
+### 2. Backend
 
 ```bash
 cd backend
-```
-
-Initialize dependencies:
-
-```bash
 npm install
+node server.js         # or: npm run dev  (nodemon)
 ```
 
-If dependencies are missing, install manually:
+Runs on http://localhost:5000
+
+Swagger docs → http://localhost:5000/api-docs
+
+### 3. Stripe CLI (needed for tips)
+
+In a separate terminal, keep this running whenever you're testing the tip flow:
 
 ```bash
-npm install express mongoose dotenv cors helmet morgan jsonwebtoken bcryptjs zod multer fluent-ffmpeg nodemailer swagger-jsdoc swagger-ui-express express-mongo-sanitize @aws-sdk/client-s3 @aws-sdk/s3-request-presigner
+stripe listen --forward-to localhost:5000/api/v1/tips/webhook
 ```
 
-Install development dependency:
+Copy the `whsec_...` it prints and set it as `STRIPE_WEBHOOK_SECRET` in `backend/.env`. Without this running, tips will process on Stripe's side but the database will never update and earnings will show $0.
+
+### 4. Frontend
 
 ```bash
-npm install -D nodemon
+cd frontend
+npm install
+npm run dev
 ```
+
+Runs on http://localhost:3000
 
 ---
 
-# Backend Environment Variables
+## Environment variables
 
-Create a `.env` file inside **backend/**
+### backend/.env
 
-```
+```env
 PORT=5000
-MONGODB_URI=mongodb://127.0.0.1:27017/webproject
-JWT_SECRET=supersecret
+MONGODB_URI=mongodb://127.0.0.1:27017/clipsphere
+JWT_SECRET=your_jwt_secret
 
 MINIO_ENDPOINT=http://localhost:9000
 MINIO_ACCESS_KEY=minioadmin
 MINIO_SECRET_KEY=minioadmin
+
+CLIENT_URL=http://localhost:3000
+
+STRIPE_SECRET_KEY=sk_test_...
+STRIPE_WEBHOOK_SECRET=whsec_...
 ```
 
----
+### frontend/.env.local
 
-# Start Backend Server
-
-```bash
-npm run dev
-```
-
-Server will run on:
-
-```
-http://localhost:5000
-```
-
-Health check:
-
-```
-GET /health
-```
-
----
-
-# Frontend Setup (Next.js + Tailwind)
-
-Navigate to frontend:
-
-```bash
-cd ../frontend
-```
-
-Install dependencies:
-
-```bash
-npm install
-```
-
-Install additional packages if missing:
-
-```bash
-npm install axios react-player react-icons
-```
-
----
-
-# Frontend Environment Variables
-
-Create `.env.local` inside **frontend/**
-
-```
+```env
 NEXT_PUBLIC_API_URL=http://localhost:5000
 ```
 
+Get your Stripe test keys from https://dashboard.stripe.com/test/apikeys
+
 ---
 
-# Start Frontend
+## Features
+
+**Videos** — upload mp4s up to 5 minutes, stream via MinIO presigned URLs, like, review, and share.
+
+**Social** — follow/unfollow users, personalised feed, profile pages.
+
+**Real-time** — Socket.io keeps a private room open per authenticated user. Likes trigger instant toast notifications and a persistent nav badge that clears when you visit Activity.
+
+**Tips** — viewers can send one-time tips to creators via Stripe Checkout (test mode). Every tip is recorded in a Transaction ledger. Creators see their pending balance and full tip history at `/earnings`.
+
+**Notifications** — email alerts via Nodemailer with per-user preference controls.
+
+**Admin** — platform stats, user moderation, system health at `/admin`.
+
+---
+
+## API
+
+All routes live under `/api/v1/`.
+
+| Prefix | What it covers |
+|---|---|
+| `/auth` | register, login, logout |
+| `/users` | profile, follow, settings |
+| `/videos` | upload, feed, likes, reviews |
+| `/tips` | checkout, webhook, balance, history |
+| `/admin` | stats, health, moderation |
+
+Full interactive docs at http://localhost:5000/api-docs
+
+---
+
+## Useful scripts
 
 ```bash
-npm run dev
-```
+# promote a user to admin
+npm run promote-admin
 
-Frontend runs at:
-
-```
-http://localhost:3000
-```
-
----
-
-# MinIO Local Object Storage Setup
-
-This project uses **MinIO** to simulate cloud object storage.
-
-Run MinIO using Docker:
-
-```bash
-docker compose up -d
-```
-
-MinIO Console:
-
-```
-http://localhost:9001
-```
-
-Default credentials:
-
-```
-username: minioadmin
-password: minioadmin
-```
-
-Create a bucket for videos inside the console.
-
----
-
-# Media Processing Requirements
-
-The backend validates uploaded videos using **ffmpeg**.
-
-Video rules:
-
-* Maximum duration: **300 seconds (5 minutes)**
-* Allowed formats: **video/mp4**
-* Validation happens before upload is stored.
-
----
-
-# API Documentation
-
-Swagger API documentation is available at:
-
-```
-http://localhost:5000/api-docs
+# process the email queue manually
+npm run process-email-queue
 ```
 
 ---
 
-# Running the Full System
+## Testing tips
 
-Start services in this order:
+Use Stripe's test card — `4242 4242 4242 4242`, any future expiry, any CVC.
 
-### 1️⃣ Start MongoDB
-
-```bash
-mongod
-```
-
-### 2️⃣ Start MinIO
-
-```bash
-docker compose up -d
-```
-
-### 3️⃣ Start Backend
-
-```bash
-cd backend
-npm run dev
-```
-
-### 4️⃣ Start Frontend
-
-```bash
-cd frontend
-npm run dev
-```
+Make sure you're logged in as a different user than the video owner when tipping — the button doesn't render for the creator on their own video.
 
 ---
 
-# Main Features
+## Troubleshooting
 
-### Authentication
+**MongoDB ECONNREFUSED** — it's running in Docker, not as a system service. `docker compose up -d` is the only way to start it.
 
-* User registration
-* Login with JWT
-* Profile management
+**Earnings show $0 after tipping** — the Stripe CLI isn't running. Start `stripe listen ...` in a separate terminal before tipping.
 
-### Video System
+**Socket not connecting** — check that `CLIENT_URL` in `backend/.env` matches exactly where the frontend is running (including port).
 
-* Upload short videos
-* Video duration validation
-* Responsive video player
-
-### Social Features
-
-* Follow / unfollow users
-* Leave reviews and ratings
-* Like and comment interactions
-
-### Notifications
-
-* Email alerts
-* User notification preferences
-
-### Admin System
-
-* Platform statistics
-* Moderation tools
-* System health monitoring
-
----
-
-# Development Guidelines
-
-* Follow **Clean Architecture**:
-  Routes → Controllers → Services
-
-* Use **Zod validation** for request bodies.
-
-* All protected routes require **JWT authentication**.
-
-* Ownership middleware must validate user actions.
-
----
-
-# Testing
-
-API endpoints can be tested using:
-
-* **Postman**
-* **Swagger UI**
-
-Postman collections are stored in:
-
-```
-docs/
-```
-
----
-
-# Phase Implementation
-
-### Phase 1
-
-Backend infrastructure and API system.
-
-### Phase 2
-
-Next.js frontend and media pipeline.
-
-### Phase 3
-
-Real-time notifications and monetization.
-
-### Phase 4
-
-Deployment and system optimization.
-
----
-
-# Troubleshooting
-
-### npm ENOSPC error
-
-Clear npm cache:
-
-```bash
-npm cache clean --force
-```
-
-### Port already in use
-
-Kill the process:
-
-```bash
-npx kill-port 5000
-```
-
-### MongoDB connection failure
-
-Ensure MongoDB service is running.
-
----
-
-# Contributors
-
-Project developed as part of the **Web Development course**.
-
----
-
-# License
-
-This project is for **educational purposes**.
-
-```
-```
-
+**Port 5000 already in use** — `npx kill-port 5000`
