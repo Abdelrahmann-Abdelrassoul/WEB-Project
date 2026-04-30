@@ -8,6 +8,7 @@ import { useApp } from "../../context/AppContext";
 import LoadingSpinner from "../../components/ui/LoadingSpinner";
 import VideoPlayer from "../../components/ui/VideoPlayer";
 import { getVideos } from "../../services/videoService";
+import VideoCardSkeleton from "../../components/ui/VideoCardSkeleton";
 
 const PAGE_SIZE = 8;
 const FEED_OPTIONS = [
@@ -215,9 +216,10 @@ export default function HomePage() {
       ) : null}
 
       {initialLoading ? (
-        <div className="flex min-h-[320px] flex-col items-center justify-center gap-4 rounded-2xl border border-white/10 bg-white/5">
-          <LoadingSpinner size="lg" color="purple" />
-          <p className="text-sm text-gray-400">Loading videos for your feed...</p>
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <VideoCardSkeleton key={i} />
+          ))}
         </div>
       ) : null}
 
@@ -252,7 +254,7 @@ export default function HomePage() {
               ) : (
                 <div className="aspect-video bg-gradient-to-br from-gray-800 to-gray-900 relative flex items-center justify-center">
                   <Play className="text-white/50 group-hover:text-white/80 transition-colors" size={48} />
-                  <div className="absolute bottom-2 right-2 bg-black/70 backdrop-blur-sm rounded-full px-2 py-1 text-xs text-white flex items-center gap-1">
+                  <div className="absolute bottom-2 right-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-full px-2.5 py-1 text-xs text-white flex items-center gap-1 shadow-sm">
                     <Clock size={12} />
                     {formatDuration(video.duration)}
                   </div>
@@ -261,8 +263,16 @@ export default function HomePage() {
                   </div>
                 </div>
               )}
-              <div className="absolute top-2 left-2 rounded-full border border-white/10 bg-black/50 px-3 py-1 text-xs uppercase tracking-[0.2em] text-white/80">
+              <div className="absolute top-2 left-2 rounded-full border border-white/20 bg-white/10 backdrop-blur-md px-3 py-1 text-xs uppercase tracking-[0.2em] text-white/90 shadow-sm">
                 Public
+              </div>
+              <div className="absolute inset-x-0 bottom-0 translate-y-full group-hover:translate-y-0 transition-transform duration-300 bg-white/10 backdrop-blur-md border-t border-white/10 px-4 py-2 flex items-center justify-between">
+                <span className="text-xs text-white/80 flex items-center gap-1">
+                  <Eye size={12} /> {formatViews(video.viewscount)} views
+                </span>
+                <span className="text-xs text-white/80 flex items-center gap-1">
+                  <Star size={12} /> {Number(video.avgRating ?? 0).toFixed(1)}
+                </span>
               </div>
             </div>
 
