@@ -65,3 +65,15 @@ export {
   createReviewSchema,
   updateReviewSchema,
 };
+
+const createTipSchema = z.object({
+  videoId: z.string().min(1, "videoId is required"),
+  amountCents: z
+    .number({ invalid_type_error: "amountCents must be a number" })
+    .int("amountCents must be an integer")
+    .min(50, "Minimum tip is $0.50")
+    .max(100000, "Maximum tip is $1,000"),
+  message: z.string().max(200, "Message must not exceed 200 characters").optional().default(""),
+});
+
+export { createTipSchema };

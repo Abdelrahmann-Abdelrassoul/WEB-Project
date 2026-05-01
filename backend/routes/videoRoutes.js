@@ -17,6 +17,7 @@ import validate from "../middleware/validateMiddleware.js";
 import { optionalProtect, protect } from "../middleware/authMiddleware.js";
 import { handleVideoUpload } from "../middleware/uploadMiddleware.js";
 import { checkOwnership } from "../middleware/ownershipMiddleware.js";
+import { uploadLimiter } from "../config/rateLimiter.js";
 
 const router = express.Router();
 
@@ -122,7 +123,7 @@ router.get("/", optionalProtect, listVideos);
  *       401:
  *         $ref: '#/components/responses/Unauthorized'
  */
-router.post("/", protect, handleVideoUpload, validate(createVideoSchema), createVideo);
+router.post("/", protect, uploadLimiter, handleVideoUpload, validate(createVideoSchema), createVideo);
 
 /**
  * @swagger

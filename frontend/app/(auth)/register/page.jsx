@@ -29,6 +29,12 @@ export default function RegisterPage() {
     e.preventDefault();
     setError("");
 
+    if (!formData.username.trim()) return setError("Username is required");
+    if (formData.username.trim().length < 3) return setError("Username must be at least 3 characters");
+    if (!formData.email.trim()) return setError("Email is required");
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) return setError("Enter a valid email address");
+    if (!formData.password) return setError("Password is required");
+    if (formData.password.length < 6) return setError("Password must be at least 6 characters");
     if (formData.password !== formData.confirmPassword) {
       setError("Passwords do not match");
       return;

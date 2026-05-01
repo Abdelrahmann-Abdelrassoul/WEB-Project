@@ -2,6 +2,7 @@ import express from "express";
 import { register, login, logout } from "../controllers/authController.js";
 import validate from "../middleware/validateMiddleware.js";
 import { registerSchema, loginSchema } from "../utils/validators.js";
+import { authLimiter } from "../config/rateLimiter.js";
 
 const router = express.Router();
 
@@ -46,7 +47,7 @@ const router = express.Router();
  *               status: fail
  *               message: Email already in use.
  */
-router.post("/register", validate(registerSchema), register);
+router.post("/register", authLimiter, validate(registerSchema), register);
 
 /**
  * @swagger
@@ -89,7 +90,7 @@ router.post("/register", validate(registerSchema), register);
  *               status: fail
  *               message: Invalid email or password.
  */
-router.post("/login", validate(loginSchema), login);
+router.post("/login", authLimiter, validate(loginSchema), login);
 
 router.post("/logout", logout);
 
