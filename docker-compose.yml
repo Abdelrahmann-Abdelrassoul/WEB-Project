@@ -74,7 +74,7 @@ services:
       MONGO_URI: mongodb://mongodb:27017/webproject
       MINIO_ENDPOINT: http://minio:9000
       REDIS_URL: redis://redis:6379
-      CLIENT_URL: http://localhost
+      CLIENT_URL: https://localhost
     depends_on:
       mongodb:
         condition: service_healthy
@@ -96,12 +96,12 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        # At build-time the browser will hit Nginx, which proxies /api to backend
-        NEXT_PUBLIC_API_URL: http://localhost
+        # At build-time the browser will hit Nginx, which proxies /api → backend
+        NEXT_PUBLIC_API_URL: https://localhost
     container_name: frontend
     restart: unless-stopped
     environment:
-      NEXT_PUBLIC_API_URL: http://localhost
+      NEXT_PUBLIC_API_URL: https://localhost
     depends_on:
       backend:
         condition: service_healthy
@@ -114,8 +114,10 @@ services:
     restart: unless-stopped
     ports:
       - "80:80"
+      - "443:443"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./nginx/certs:/etc/nginx/certs:ro
     depends_on:
       - frontend
       - backend
