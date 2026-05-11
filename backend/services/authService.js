@@ -1,7 +1,7 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import User from "../models/userModel.js";
-import { sendWelcomeEmail } from "./emailService.js";
+import { enqueueWelcomeEmail } from "../queues/emailQueue.js";
 
 const signToken = (user) => {
   return jwt.sign(
@@ -30,8 +30,8 @@ const registerUser = async ({ username, email, password }) => {
     password: hashedPassword,
   });
 
-  sendWelcomeEmail({ email: user.email, username: user.username }).catch((err) =>
-    console.error("[Email] Failed to send welcome email:", err.message)
+  enqueueWelcomeEmail({ email: user.email, username: user.username }).catch((err) =>
+    console.error("[Queue] Failed to enqueue welcome email:", err.message)
   );
 
   const token = signToken(user);

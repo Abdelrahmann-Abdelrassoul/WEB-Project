@@ -1,8 +1,8 @@
 import EmailQueue from "../models/emailQueueModel.js";
 import Notification from "../models/notificationModel.js";
 import User from "../models/userModel.js";
-import { sendEngagementEmail } from "./emailService.js";
 import Video from "../models/videoModel.js";
+import { enqueueNotificationEmail } from "../queues/emailQueue.js";
 
 export const getNotificationRecipient = async (recipientId) => {
   if (!recipientId) {
@@ -74,23 +74,25 @@ export const trackNotificationEvent = async ({
       : null,
     emailEnabled
       ? (async () => {
-          const [queueRecord, recipientFull, actorFull, video] = await Promise.all([
-            EmailQueue.create({ recipient: recipientId, actor: actorId, type, entityId, entityModel }),
-            User.findById(recipientId).select("email username"),
-            User.findById(actorId).select("username"),
-            entityModel === "Video" && entityId
-              ? Video.findById(entityId).select("title").lean()
-              : Promise.resolve(null),
-          ]);
-
-          sendEngagementEmail({
-            recipientEmail: recipientFull.email,
-            recipientUsername: recipientFull.username,
-            actorUsername: actorFull.username,
+          // Persist to EmailQueue for audit trail / legacy compatibility
+          const queueRecord = await EmailQueue.create({
+            recipient: recipientId,
+            actor: actorId,
             type,
-            videoTitle: video?.title || "",
+            entityId,
+            entityModel,
+          });
+
+          // Hand off to the BullMQ worker — fire and forget from the request cycle
+          enqueueNotificationEmail({
+            recipientId: recipientId.toString(),
+            actorId: actorId.toString(),
+            type,
+            entityId: entityId?.toString() ?? null,
+            entityModel: entityModel ?? null,
+            queueModelId: queueRecord._id.toString(), // lets the worker update status
           }).catch((err) =>
-            console.error(`[Email] Failed to send engagement email (${type}):`, err.message)
+            console.error(`[Queue] Failed to enqueue notification email (${type}):`, err.message)
           );
 
           return queueRecord;

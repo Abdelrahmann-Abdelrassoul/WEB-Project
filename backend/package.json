@@ -11,13 +11,15 @@
     "dev": "nodemon server.js",
     "start": "node server.js",
     "promote-admin": "node scripts/promoteUserToAdmin.js",
-    "process-email-queue": "node scripts/processEmailQueue.js"
+    "process-email-queue": "node scripts/processEmailQueue.js",
+    "worker": "node worker.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "module",
   "dependencies": {
+    "bullmq": "^5.0.0",
     "@aws-sdk/client-s3": "^3.1006.0",
     "@aws-sdk/s3-request-presigner": "^3.1006.0",
     "bcryptjs": "^3.0.3",
