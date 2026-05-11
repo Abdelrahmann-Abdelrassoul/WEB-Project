@@ -1,4 +1,5 @@
 import Video from "../models/videoModel.js";
+import { getCache, setCache } from "../config/cache.js";
 import Follow from "../models/followModel.js";
 import mongoose from "mongoose";
 import AppError from "../utils/appError.js";
@@ -28,6 +29,14 @@ export const listVideos = async ({
   }
 
   if (normalizedFeed === "trending") {
+    const cacheKey = `trending:${safeLimit}:${safeSkip}`;
+    const cached = await getCache(cacheKey);
+    if (cached) {
+      console.log(`[cache] HIT ${cacheKey}`);
+      return cached;
+    }
+    console.log(`[cache] MISS ${cacheKey}`);
+
     const [aggregationResult] = await Video.aggregate([
       { $match: filter },
       ...buildReviewMetricsLookupStages(),
@@ -70,7 +79,7 @@ export const listVideos = async ({
     const videos = aggregationResult?.videos ?? [];
     const total = aggregationResult?.totalCount?.[0]?.count ?? 0;
 
-    return {
+    const result = {
       videos,
       total,
       limit: safeLimit,
@@ -78,6 +87,8 @@ export const listVideos = async ({
       hasMore: safeSkip + videos.length < total,
       feed: normalizedFeed,
     };
+    await setCache(cacheKey, result, 60); // 60s TTL
+    return result;
   }
 
   if (normalizedFeed === "following") {

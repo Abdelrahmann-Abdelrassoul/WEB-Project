@@ -12,7 +12,7 @@ const json429 = (req, res) =>
  */
 export const apiLimiter = rateLimit({
   windowMs: 60 * 1000,
-  max: 100,
+  max: 500,
   standardHeaders: true,
   legacyHeaders: false,
   handler: json429,
