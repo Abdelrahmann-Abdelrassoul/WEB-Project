@@ -1,18 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 
-/**
- * /tip/success
- * Stripe redirects here after a completed checkout session.
- * URL contains ?session_id=cs_test_...
- *
- * We just show a confirmation — the webhook has already handled the
- * database update on the backend.
- */
-export default function TipSuccessPage() {
+function TipSuccessContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const sessionId = searchParams.get("session_id");
@@ -71,5 +63,13 @@ export default function TipSuccessPage() {
         </p>
       </div>
     </main>
+  );
+}
+
+export default function TipSuccessPage() {
+  return (
+    <Suspense>
+      <TipSuccessContent />
+    </Suspense>
   );
 }
