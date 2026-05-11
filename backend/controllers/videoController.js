@@ -16,7 +16,7 @@ import catchAsync from "../utils/catchAsync.js";
 import AppError from "../utils/appError.js";
 import { GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import s3, { BUCKET_NAME } from "../config/minio.js";
+import s3, { BUCKET_NAME, rewritePresignedUrl } from "../config/minio.js";
 import { getIO } from "../config/socket.js";
 
 const withPlaybackUrls = async (videos = []) => {
@@ -27,9 +27,7 @@ const withPlaybackUrls = async (videos = []) => {
           Bucket: BUCKET_NAME,
           Key: video.videoURL,
         });
-        const playbackUrl = await getSignedUrl(s3, command, {
-          expiresIn: 60 * 15,
-        });
+        const playbackUrl = rewritePresignedUrl(await getSignedUrl(s3, command, { expiresIn: 60 * 15 }));
         const plainVideo = video?.toObject ? video.toObject() : { ...video };
         return { ...plainVideo, playbackUrl };
       } catch (err) {
@@ -270,9 +268,7 @@ const streamVideo = catchAsync(async (req, res, next) => {
     Key: video.videoURL,   // videoURL field stores the objectKey
   });
 
-  const presignedUrl = await getSignedUrl(s3, command, {
-    expiresIn: 60 * 15,   // 15 minutes
-  });
+  const presignedUrl = rewritePresignedUrl(await getSignedUrl(s3, command, { expiresIn: 60 * 15 }));
 
   res.status(200).json({
     status: "success",

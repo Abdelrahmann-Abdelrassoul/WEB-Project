@@ -1,9 +1,11 @@
 version: "3.9"
 
+# ── Internal network — services talk to each other by service name ─────────────
 networks:
   app-network:
     driver: bridge
 
+# ── Named volumes for persistent data ─────────────────────────────────────────
 volumes:
   mongo_data:
   minio_data:
@@ -11,6 +13,7 @@ volumes:
 
 services:
 
+  # ── MongoDB ──────────────────────────────────────────────────────────────────
   mongodb:
     image: mongo:7
     container_name: mongodb
@@ -28,6 +31,7 @@ services:
       retries: 5
       start_period: 20s
 
+  # ── Redis ─────────────────────────────────────────────────────────────────────
   redis:
     image: redis:7-alpine
     container_name: redis
@@ -42,6 +46,7 @@ services:
       timeout: 5s
       retries: 5
 
+  # ── MinIO (object storage) ───────────────────────────────────────────────────
   minio:
     image: quay.io/minio/minio
     container_name: minio
@@ -61,6 +66,7 @@ services:
       retries: 5
       start_period: 10s
 
+  # ── Backend (Express + Socket.io) ────────────────────────────────────────────
   backend:
     build:
       context: ./backend
@@ -75,6 +81,7 @@ services:
       MINIO_ENDPOINT: http://minio:9000
       REDIS_URL: redis://redis:6379
       CLIENT_URL: https://localhost
+      MINIO_PUBLIC_URL: https://localhost/storage/videos
     depends_on:
       mongodb:
         condition: service_healthy
@@ -91,6 +98,7 @@ services:
       retries: 5
       start_period: 30s
 
+  # ── Frontend (Next.js) ───────────────────────────────────────────────────────
   frontend:
     build:
       context: ./frontend
@@ -108,6 +116,7 @@ services:
     networks:
       - app-network
 
+  # ── Nginx (reverse proxy) ────────────────────────────────────────────────────
   nginx:
     image: nginx:1.27-alpine
     container_name: nginx

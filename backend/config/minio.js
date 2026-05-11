@@ -21,6 +21,26 @@ const s3 = new S3Client({
 
 export const BUCKET_NAME = process.env.MINIO_BUCKET_NAME;
 
+/**
+ * Rewrites a presigned URL so the browser hits Nginx (/storage/...)
+ * instead of the internal minio:9000 hostname.
+ *
+ * MINIO_ENDPOINT   = http://minio:9000        (internal, for server-side requests)
+ * MINIO_PUBLIC_URL = https://localhost/storage (public, for browser URLs)
+ */
+export const rewritePresignedUrl = (presignedUrl) => {
+  const publicBase = process.env.MINIO_PUBLIC_URL;
+  if (!publicBase) return presignedUrl;
+
+  // presignedUrl looks like: http://minio:9000/videos/file.mp4?X-Amz-...
+  // We replace everything up to and including the bucket name
+  const url = new URL(presignedUrl);
+  const pathParts = url.pathname.split("/").filter(Boolean);
+  const pathWithoutBucket = "/" + pathParts.slice(1).join("/");
+
+  return `${publicBase.replace(/\/$/, "")}${pathWithoutBucket}${url.search}`;
+};
+
 export const ensureBucketExists = async () => {
   if (!BUCKET_NAME) {
     throw new Error("MINIO_BUCKET_NAME is not set");
