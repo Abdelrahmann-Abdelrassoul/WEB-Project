@@ -10,6 +10,8 @@ import {
   listVideoReviews,
   likeVideo,
   unlikeVideo,
+  getTrendingFeed,
+  getForYouFeed,
 } from "../controllers/videoController.js";
 import { createReview, loadReview, updateReview, deleteReview as deleteReviewController } from "../controllers/reviewController.js";
 import { createVideoSchema, updateVideoSchema, createReviewSchema, updateReviewSchema } from "../utils/validators.js";
@@ -20,6 +22,44 @@ import { checkOwnership } from "../middleware/ownershipMiddleware.js";
 import { uploadLimiter } from "../config/rateLimiter.js";
 
 const router = express.Router();
+
+/**
+ * @swagger
+ * /videos/feed/trending:
+ *   get:
+ *     summary: Get trending videos ranked by trendingScore
+ *     tags: [Videos]
+ *     parameters:
+ *       - $ref: '#/components/parameters/limitQuery'
+ *       - $ref: '#/components/parameters/skipQuery'
+ *       - $ref: '#/components/parameters/pageQuery'
+ *     responses:
+ *       200:
+ *         description: Paginated trending video feed
+ */
+// #150 — dedicated trending feed endpoint (must be before /:id)
+router.get("/feed/trending", optionalProtect, getTrendingFeed);
+
+/**
+ * @swagger
+ * /videos/feed/foryou:
+ *   get:
+ *     summary: Get personalised "For You" feed (following-first, then trending)
+ *     tags: [Videos]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - $ref: '#/components/parameters/limitQuery'
+ *       - $ref: '#/components/parameters/skipQuery'
+ *       - $ref: '#/components/parameters/pageQuery'
+ *     responses:
+ *       200:
+ *         description: Paginated personalised feed
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ */
+// #150 — dedicated "for you" feed endpoint (auth required, must be before /:id)
+router.get("/feed/foryou", protect, getForYouFeed);
 
 /**
  * @swagger
@@ -35,8 +75,8 @@ const router = express.Router();
  *         name: feed
  *         schema:
  *           type: string
- *           enum: [all, following, trending]
- *         description: Feed mode. Use `following` to return videos only from accounts the authenticated user follows, or `trending` to rank by recent engagement and average review score.
+ *           enum: [all, following, trending, foryou]
+ *         description: Feed mode. Use `following` or `foryou` for personalised feeds, or `trending` to rank by trendingScore.
  *       - in: query
  *         name: owner
  *         schema:
@@ -307,6 +347,6 @@ router.get(
   "/:id/stream",
   protect,
   streamVideo
-)
+);
 
 export default router;

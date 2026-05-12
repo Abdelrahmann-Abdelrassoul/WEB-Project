@@ -73,7 +73,7 @@ const listVideos = catchAsync(async (req, res) => {
   const parsedLimit = Number.parseInt(req.query.limit, 10);
   const parsedSkip = Number.parseInt(req.query.skip, 10);
   const parsedPage = Number.parseInt(req.query.page, 10);
-  const feed = ["following", "trending"].includes(req.query.feed) ? req.query.feed : "all";
+  const feed = ["following", "trending", "foryou"].includes(req.query.feed) ? req.query.feed : "all";
   const ownerId = req.query.owner ? String(req.query.owner).trim() : null;
 
   const limit = Number.isNaN(parsedLimit) ? 20 : Math.min(Math.max(parsedLimit, 1), 50);
@@ -276,6 +276,86 @@ const streamVideo = catchAsync(async (req, res, next) => {
   });
 });
 
+// #151 — Dedicated controller for GET /videos/feed/trending
+// Reuses listVideosService with feed="trending" so caching + scoring logic
+// is not duplicated. Auth is optional — unauthenticated users can browse.
+const getTrendingFeed = catchAsync(async (req, res) => {
+  const parsedLimit = Number.parseInt(req.query.limit, 10);
+  const parsedSkip = Number.parseInt(req.query.skip, 10);
+  const parsedPage = Number.parseInt(req.query.page, 10);
+
+  const limit = Number.isNaN(parsedLimit) ? 20 : Math.min(Math.max(parsedLimit, 1), 50);
+  const page = Number.isNaN(parsedPage) ? 1 : Math.max(parsedPage, 1);
+  const skip = Number.isNaN(parsedSkip) ? (page - 1) * limit : Math.max(parsedSkip, 0);
+
+  const pagination = await listVideosService({
+    limit,
+    skip,
+    feed: "trending",
+    currentUserId: req.user?.id ?? null,
+  });
+
+  const videosWithPlayback = await withPlaybackUrls(pagination.videos);
+  const videosWithLikes = await withLikeMetrics({
+    videos: videosWithPlayback,
+    currentUserId: req.user?.id ?? null,
+  });
+
+  res.status(200).json({
+    status: "success",
+    results: videosWithLikes.length,
+    pagination: {
+      limit: pagination.limit,
+      skip: pagination.skip,
+      total: pagination.total,
+      hasMore: pagination.hasMore,
+      nextSkip: pagination.hasMore ? pagination.skip + pagination.videos.length : null,
+      feed: "trending",
+    },
+    data: { videos: videosWithLikes },
+  });
+});
+
+// #151 — Dedicated controller for GET /videos/feed/foryou
+// Requires authentication — returns followed users' videos first, then
+// globally trending videos to fill the rest of the page (bonus Step C).
+const getForYouFeed = catchAsync(async (req, res) => {
+  const parsedLimit = Number.parseInt(req.query.limit, 10);
+  const parsedSkip = Number.parseInt(req.query.skip, 10);
+  const parsedPage = Number.parseInt(req.query.page, 10);
+
+  const limit = Number.isNaN(parsedLimit) ? 20 : Math.min(Math.max(parsedLimit, 1), 50);
+  const page = Number.isNaN(parsedPage) ? 1 : Math.max(parsedPage, 1);
+  const skip = Number.isNaN(parsedSkip) ? (page - 1) * limit : Math.max(parsedSkip, 0);
+
+  const pagination = await listVideosService({
+    limit,
+    skip,
+    feed: "foryou",
+    currentUserId: req.user.id,
+  });
+
+  const videosWithPlayback = await withPlaybackUrls(pagination.videos);
+  const videosWithLikes = await withLikeMetrics({
+    videos: videosWithPlayback,
+    currentUserId: req.user.id,
+  });
+
+  res.status(200).json({
+    status: "success",
+    results: videosWithLikes.length,
+    pagination: {
+      limit: pagination.limit,
+      skip: pagination.skip,
+      total: pagination.total,
+      hasMore: pagination.hasMore,
+      nextSkip: pagination.hasMore ? pagination.skip + pagination.videos.length : null,
+      feed: "foryou",
+    },
+    data: { videos: videosWithLikes },
+  });
+});
+
 export {
   listVideos,
   createVideo,
@@ -287,4 +367,6 @@ export {
   listVideoReviews,
   likeVideo,
   unlikeVideo,
+  getTrendingFeed,
+  getForYouFeed,
 };
