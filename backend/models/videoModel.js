@@ -45,17 +45,24 @@ const videoSchema = new mongoose.Schema(
       type: Number,
       default: 0,
       min: [0, "Trending score cannot be negative"],
-      index: true,
     },
   },
   { timestamps: true }
 );
 
-// Helpful indexes
-videoSchema.index({ owner: 1 });
-videoSchema.index({ status: 1 });
-videoSchema.index({ createdAt: -1 });
-videoSchema.index({ trendingScore: -1 });
+// --- #146 Index Optimization ---
+
+// "All" feed: list public videos newest-first
+videoSchema.index({ status: 1, createdAt: -1 });
+
+// Trending feed: public videos sorted by trendingScore descending
+videoSchema.index({ status: 1, trendingScore: -1 });
+
+// "For You" / Following feed: public videos by a specific owner, sorted by trendingScore
+videoSchema.index({ status: 1, owner: 1, trendingScore: -1 });
+
+// Profile page: all videos by owner regardless of status
+videoSchema.index({ owner: 1, createdAt: -1 });
 
 const Video = mongoose.model("Video", videoSchema);
 
