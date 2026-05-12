@@ -1,4 +1,5 @@
 import Like from "../models/likeModel.js";
+import Video from "../models/videoModel.js";
 
 export const listLikeMetrics = async ({ videoIds = [], currentUserId = null }) => {
   if (!videoIds.length) {
@@ -36,16 +37,33 @@ export const listLikeMetricsForVideo = async ({ videoId, currentUserId = null })
 };
 
 export const likeVideo = async ({ videoId, userId }) => {
-  await Like.findOneAndUpdate(
+  const result = await Like.findOneAndUpdate(
     { video: videoId, user: userId },
     { $setOnInsert: { video: videoId, user: userId } },
     { upsert: true, new: false }
   );
 
+  // Only increment if this is a new like (not a duplicate)
+  if (!result) {
+    await Video.findByIdAndUpdate(videoId, { $inc: { trendingScore: 10 } });
+  }
+
   return Like.countDocuments({ video: videoId });
 };
 
 export const unlikeVideo = async ({ videoId, userId }) => {
-  await Like.deleteOne({ video: videoId, user: userId });
+  const result = await Like.deleteOne({ video: videoId, user: userId });
+
+  // Only decrement if a like was actually removed
+  if (result.deletedCount > 0) {
+    await Video.findByIdAndUpdate(videoId, {
+      $inc: { trendingScore: -10 },
+    });
+    // Clamp to 0 — score should never go negative
+    await Video.findByIdAndUpdate(videoId, [
+      { $set: { trendingScore: { $max: ["$trendingScore", 0] } } },
+    ]);
+  }
+
   return Like.countDocuments({ video: videoId });
 };

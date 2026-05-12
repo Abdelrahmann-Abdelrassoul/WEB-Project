@@ -150,15 +150,17 @@ export const deleteVideo = async (videoId) => {
 };
 
 export const createVideo = async({ title, description, videoURL, duration, ownerId })=>{
+  // Freshness bonus: 20 points for brand-new videos, decays to 0 over 7 days
+  const freshnessBonus = 20;
 
-    const video = await Video.create({
-        title,
-        description,
-        videoURL,
-        duration,
-        owner: ownerId,
+  const video = await Video.create({
+    title,
+    description,
+    videoURL,
+    duration,
+    owner: ownerId,
+    trendingScore: freshnessBonus,
+  });
 
-    });
-
-    return video;
+  return video;
 };

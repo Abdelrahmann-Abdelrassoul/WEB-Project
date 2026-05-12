@@ -41,6 +41,12 @@ const videoSchema = new mongoose.Schema(
       enum: ["public", "private", "flagged"],
       default: "public",
     },
+    trendingScore: {
+      type: Number,
+      default: 0,
+      min: [0, "Trending score cannot be negative"],
+      index: true,
+    },
   },
   { timestamps: true }
 );
@@ -49,6 +55,7 @@ const videoSchema = new mongoose.Schema(
 videoSchema.index({ owner: 1 });
 videoSchema.index({ status: 1 });
 videoSchema.index({ createdAt: -1 });
+videoSchema.index({ trendingScore: -1 });
 
 const Video = mongoose.model("Video", videoSchema);
 
