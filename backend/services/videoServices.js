@@ -18,7 +18,7 @@ export const listVideos = async ({
 }) => {
   const safeLimit = Math.min(Math.max(limit, 1), 50);
   const safeSkip = Math.max(skip, 0);
-  const normalizedFeed = ["following", "trending"].includes(feed) ? feed : "all";
+  const normalizedFeed = ["following", "trending", "foryou"].includes(feed) ? feed : "all";
   const filter = { status: "public" };
 
   if (ownerId) {
@@ -91,27 +91,54 @@ export const listVideos = async ({
     return result;
   }
 
-  if (normalizedFeed === "following") {
+  // ── "For You" feed — Following-first + Trending fill (#141 #142 #143 #144) ──
+  if (normalizedFeed === "following" || normalizedFeed === "foryou") {
     if (!currentUserId) {
-      throw new AppError("You must be logged in to load the following feed", 401);
+      throw new AppError("You must be logged in to load this feed", 401);
     }
 
+    // #141 — fetch followed user IDs
     const followedUserIds = await Follow.find({ follower: currentUserId }).distinct("following");
 
-    if (!followedUserIds.length) {
-      return {
-        videos: [],
-        total: 0,
-        limit: safeLimit,
-        skip: safeSkip,
-        hasMore: false,
-        feed: normalizedFeed,
-      };
+    // #141 — fetch videos from followed users sorted by trendingScore desc
+    const followingVideos = followedUserIds.length
+      ? await Video.find({ status: "public", owner: { $in: followedUserIds } })
+          .sort({ trendingScore: -1, createdAt: -1 })
+          .populate("owner", "username avatarKey")
+          .lean()
+      : [];
+
+    // #142 — fetch globally trending videos sorted by trendingScore desc
+    const followingIds = new Set(followingVideos.map((v) => String(v._id)));
+    const trendingVideos = await Video.find({ status: "public" })
+      .sort({ trendingScore: -1, createdAt: -1 })
+      .limit(safeLimit * 3) // fetch extra to account for deduplication
+      .populate("owner", "username avatarKey")
+      .lean();
+
+    // #143 — merge: following-first, then trending, deduplicated
+    const merged = [...followingVideos];
+    for (const video of trendingVideos) {
+      if (!followingIds.has(String(video._id))) {
+        merged.push(video);
+      }
     }
 
-    filter.owner = { $in: followedUserIds };
+    // #144 — pagination over the merged feed
+    const total = merged.length;
+    const paginated = merged.slice(safeSkip, safeSkip + safeLimit);
+
+    return {
+      videos: paginated,
+      total,
+      limit: safeLimit,
+      skip: safeSkip,
+      hasMore: safeSkip + paginated.length < total,
+      feed: normalizedFeed,
+    };
   }
 
+  // ── "All" feed — all public videos, newest first ──────────────────────────
   const [videos, total] = await Promise.all([
     Video.find(filter)
       .sort({ createdAt: -1 })
