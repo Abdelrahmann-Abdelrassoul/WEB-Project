@@ -283,7 +283,13 @@ export default function HomePage() {
               <h3 className="text-white font-semibold text-lg mb-1">{video.title}</h3>
               <p className="text-gray-400 text-sm mb-3 flex items-center gap-2">
                 <UserRound size={14} />
-                @{video.owner?.username || "unknown"}
+                <a
+                  href={`/profile/${video.owner?._id}`}
+                  onClick={(e) => e.stopPropagation()}
+                  className="hover:text-purple-400 transition-colors"
+                >
+                  @{video.owner?.username || "unknown"}
+                </a>
               </p>
 
               <p className="text-sm text-gray-300 min-h-12 mb-4">

@@ -60,9 +60,11 @@ export const unlikeVideo = async ({ videoId, userId }) => {
       $inc: { trendingScore: -10 },
     });
     // Clamp to 0 — score should never go negative
-    await Video.findByIdAndUpdate(videoId, [
-      { $set: { trendingScore: { $max: ["$trendingScore", 0] } } },
-    ]);
+    await Video.findByIdAndUpdate(
+      videoId,
+      [{ $set: { trendingScore: { $max: ["$trendingScore", 0] } } }],
+      { updatePipeline: true }
+    );
   }
 
   return Like.countDocuments({ video: videoId });
