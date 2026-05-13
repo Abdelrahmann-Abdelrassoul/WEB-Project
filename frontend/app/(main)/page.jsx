@@ -146,7 +146,7 @@ export default function HomePage() {
 
   return (
     <div className="space-y-6">
-      <div className="bg-gradient-to-r from-purple-600/20 to-pink-600/20 rounded-2xl p-6 border border-white/10">
+      <div className="bg-linear-to-r from-purple-600/20 to-pink-600/20 rounded-2xl p-6 border border-white/10">
         <h1 className="text-3xl font-bold text-white">
           {user ? `Welcome back, ${user.username}!` : "Explore the latest videos"}
         </h1>
@@ -252,7 +252,7 @@ export default function HomePage() {
               {video.playbackUrl ? (
                 <VideoPlayer src={video.playbackUrl} />
               ) : (
-                <div className="aspect-video bg-gradient-to-br from-gray-800 to-gray-900 relative flex items-center justify-center">
+                <div className="aspect-video bg-linear-to-br from-gray-800 to-gray-900 relative flex items-center justify-center">
                   <Play className="text-white/50 group-hover:text-white/80 transition-colors" size={48} />
                   <div className="absolute bottom-2 right-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-full px-2.5 py-1 text-xs text-white flex items-center gap-1 shadow-sm">
                     <Clock size={12} />
@@ -266,7 +266,7 @@ export default function HomePage() {
               <div className="absolute top-2 left-2 rounded-full border border-white/20 bg-white/10 backdrop-blur-md px-3 py-1 text-xs uppercase tracking-[0.2em] text-white/90 shadow-sm">
                 Public
               </div>
-              <div className="absolute inset-x-0 bottom-0 translate-y-full group-hover:translate-y-0 transition-transform duration-300 bg-white/10 backdrop-blur-md border-t border-white/10 px-4 py-2 flex items-center justify-between">
+              <div className="bg-black/60 backdrop-blur-md border-t border-white/10 px-4 py-2 flex items-center justify-between">
                 <span className="text-xs text-white/80 flex items-center gap-1">
                   <Eye size={12} /> {formatViews(video.viewscount)} views
                 </span>
@@ -278,15 +278,15 @@ export default function HomePage() {
 
             <Link
               href={`/video/${video._id}`}
-              className="block p-4 transition-colors hover:bg-white/[0.03]"
+              className="block p-4 transition-colors hover:bg-white/3"
             >
-              <h3 className="text-white font-semibold text-lg mb-1">{video.title}</h3>
-              <p className="text-gray-400 text-sm mb-3 flex items-center gap-2">
-                <UserRound size={14} />
+              <h3 className="text-white font-bold text-xl mb-2">{video.title}</h3>
+              <p className="text-gray-300 text-base mb-3 flex items-center gap-2">
+                <UserRound size={18} />
                 <a
                   href={`/profile/${video.owner?._id}`}
                   onClick={(e) => e.stopPropagation()}
-                  className="hover:text-purple-400 transition-colors"
+                  className="hover:text-purple-400 transition-colors font-medium"
                 >
                   @{video.owner?.username || "unknown"}
                 </a>

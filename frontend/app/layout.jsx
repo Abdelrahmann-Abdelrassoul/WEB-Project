@@ -8,7 +8,7 @@ export const metadata = {
   title: "ClipSphere",
   description: "Share your moments",
   icons: {
-    icon: "images/Small_logo.png",
+    icon: "/images/Small_logo.png",
   },
 };
 

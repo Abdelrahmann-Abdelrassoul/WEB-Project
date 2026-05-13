@@ -157,6 +157,8 @@ const getVideo = catchAsync(async (req, res, next) => {
     return next(new AppError("Video not found", 404));
   }
 
+  await req.video.updateOne({ $inc: { viewscount: 1 } });
+  
   const [videoDoc, reviews, likeMetrics] = await Promise.all([
     getVideoByID(req.video._id),
     listReviewsByVideo(req.video._id),
